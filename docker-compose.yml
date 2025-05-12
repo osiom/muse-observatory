@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: muse-observatory-db
+    restart: always
+    environment:
+      POSTGRES_USER: museuser
+      POSTGRES_PASSWORD: musepassword
+      POSTGRES_DB: muse_observatory
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - muse-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: muse-observatory-app
+    restart: always
+    depends_on:
+      - postgres
+    ports:
+      - "8501:8501"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=muse_observatory
+      - DB_USER=museuser
+      - DB_PASSWORD=musepassword
+    networks:
+      - muse-network
+
+networks:
+  muse-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
