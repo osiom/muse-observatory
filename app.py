@@ -3,12 +3,10 @@ import time
 import base64
 import uuid
 import random
-import asyncio
-import re
 from datetime import datetime
 from typing import Dict, Any
 
-import psycopg2
+from psycopg2 import pool
 from nicegui import app, ui
 from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
@@ -22,6 +20,7 @@ logger = get_logger(__name__)
 os.environ['TZ'] = 'Europe/Berlin'  # Set timezone early in your app
 time.tzset()  # Apply the timezone
 load_dotenv()
+connection_pool = None
 
 # Muse Color Palette
 MUSE_COLORS = {
@@ -43,10 +42,36 @@ DB_CONFIG = {
     "port": os.getenv("DB_PORT", "5432"),
 }
 
+def init_db_pool():
+    """Initialize the connection pool"""
+    global connection_pool
+    try:
+        connection_pool = pool.SimpleConnectionPool(
+            minconn=1,      # Minimum number of connections
+            maxconn=10,     # Maximum number of connections
+            **DB_CONFIG
+        )
+        logger.info("Database connection pool initialized")
+    except Exception as e:
+        logger.error(f"Error initializing connection pool: {e}")
+        raise
+
 def get_db_connection():
-    """Create a database connection."""
-    logger.info("Connecting to the database...")
-    return psycopg2.connect(**DB_CONFIG)
+    """Get a connection from the pool"""
+    if not connection_pool:
+        init_db_pool()
+    return connection_pool.getconn()
+
+def return_db_connection(conn):
+    """Return a connection to the pool"""
+    if connection_pool:
+        connection_pool.putconn(conn)
+
+def close_db_pool():
+    """Close all connections in the pool"""
+    if connection_pool:
+        connection_pool.closeall()
+        logger.info("Database connection pool closed")
 
 def get_base64_gif(gif_path: str) -> str:
     """Convert GIF to base64 with fallback"""
@@ -248,9 +273,10 @@ def apply_styles(muse_name: str):
     ''')
 
 def get_todays_fact() -> Dict[str, Any]:
-    """Fetch today's fact"""
+    conn = None
+    cursor = None
     try:
-        conn = psycopg2.connect(**DB_CONFIG)
+        conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         
         today = datetime.now().strftime('%Y-%m-%d')
@@ -272,12 +298,15 @@ def get_todays_fact() -> Dict[str, Any]:
             'fact_check_link': '#'
         }
     finally:
-        if 'conn' in locals():
+        if cursor:
             cursor.close()
-            conn.close()
+        if conn:
+            return_db_connection(conn)  # Return to pool instead of closing
 
 def save_response(fact_info: Dict[str, Any], user_input: str, projects: List[Dict]):
-    """Save both inspiration and projects"""
+    """Save both inspiration and projects with connection pooling"""
+    conn = None
+    cursor = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -321,8 +350,10 @@ def save_response(fact_info: Dict[str, Any], user_input: str, projects: List[Dic
         ui.notify(f"Error saving: {str(e)}", type='negative')
         logger.error(f"Save failed: {str(e)}")
     finally:
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+        if conn:
+            return_db_connection(conn)  # Return to pool instead of closing
 
 def show_projects_dialog(projects: List[Dict], muse_name: str, muse_color: str) -> bool:
     """Display projects in a dialog with muse-themed styling"""
@@ -545,20 +576,18 @@ def main():
                     on_click=lambda: handle_share(fact_info, user_input.value, share_button)
                 ).classes("muse-button")
 
-if __name__ in {"__main__", "__mp_main__"}:
-    ui.run(
-        port=8080,
-        title="Muse Observatory",
-        favicon="🔭",
-        reload=False
-    )
 
 if __name__ in {"__main__", "__mp_main__"}:
     main()
     logger.info(f"Looking at the stars orbiting in the cocoex's universe! 🔭")
-    ui.run(
-        port=8080,
-        title="Muse Observatory",
-        favicon="🔭",
-        reload=False
-    )
+    try:
+        ui.run(
+            port=8080,
+            title="Muse Observatory",
+            favicon="🔭",
+            reload=False
+        )
+    except Exception as e:
+        logger.error(f"Error starting UI: {e}")
+    finally:
+        close_db_pool()
