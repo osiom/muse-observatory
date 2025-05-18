@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 from logger import get_logger
 from typing import List, Dict, Any
 
+from index import landing_page
 from projects import get_project_response
 
 # Initialize
@@ -527,15 +528,18 @@ async def handle_share(fact_info: Dict[str, Any], user_input: str, share_button:
         
         # Save to database
         save_response(fact_info, user_input, projects_data['projects'])
-        ui.notify("Shared with the universe!", type='positive')
-        
+        ui.notify(f"Shared with the {fact_info['muse']}!", type='positive')
     except Exception as e:
         ui.notify(f"Stellar interference: {str(e)}", type='negative')
         logger.error(f"Share error: {str(e)}")
     finally:
         loader.delete()
 
-@ui.page("/")
+@ui.page('/')
+def landing():
+    landing_page()
+
+@ui.page("/observatory")
 def main():
     """Main page with proper session handling"""
     fact_info = get_todays_fact()
