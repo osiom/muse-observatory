@@ -5,7 +5,9 @@ from psycopg2.extras import RealDictCursor
 from datetime import datetime
 from openai import OpenAI
 from dotenv import load_dotenv
+from logger import get_logger
 
+logger = get_logger(__name__)
 # Load environment variables
 load_dotenv()
 
@@ -41,6 +43,21 @@ def get_muse_for_today():
     day_of_week = datetime.now().weekday()  # 0 is Monday, 6 is Sunday
     return MUSES.get(day_of_week)
 
+def check_fact_exists(date):
+    """Check if a fact already exists for the given date"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM daily_facts WHERE date = %s", (date.strftime('%Y-%m-%d'),))
+        return cursor.fetchone() is not None
+    except Exception as e:
+        logger.error(f"Error checking for existing fact: {e}")
+        return False
+    finally:
+        if 'conn' in locals():
+            cursor.close()
+            conn.close()
+
 def generate_fun_fact(day_info, used_kingdom_life):
     """Generate a fun fact using OpenAI API"""
     prompt = f"""Generate a fascinating and scientifically accurate fun fact about an organism in the natural world that relates to {day_info['cause']}.
@@ -49,7 +66,7 @@ def generate_fun_fact(day_info, used_kingdom_life):
     - Focus on how this organism contributes to or addresses {day_info['cause']}
     - Be 2-3 sentences in length
     - Be appropriate for general audiences
-    - 'question_asked': The provoking question separated out. Is a thought-provoking question that encourages readers to consider how this natural adaptation might inspire sustainable transformation or innovation
+    - 'question_asked': The provoking question separated out. Is a thought-provoking question that encourages readers to consider how this natural adaptation might inspire sustainable transformation or innovation. Make the question engaging and actionable for the user that reads.
     - 'fact_check_link: include a fact check for this information by giving me an URL that:
         - Points to a reliable, up-to-date, and accessible webpage
         - Is from an authoritative organization (e.g., WWF, IUCN, National Geographic, academic or government sites)
@@ -88,7 +105,7 @@ def generate_fun_fact(day_info, used_kingdom_life):
         result = json.loads(result_text)
         return result
     except Exception as e:
-        print(f"Error generating fun fact: {e}")
+        logger.error(f"Error generating response: {e}")
         # Fallback response if API fails
         return {
             "animal_subject": "Default organism",
@@ -124,7 +141,7 @@ def get_used_kingdom_life(muse: str):
         return animal_list
 
     except Exception as e:
-        print(f"Error retrieving animals for muse '{muse}': {e}")
+        logger.error(f"Error retrieving kingdom's of life: {e}")
         return []
 
 
@@ -138,7 +155,7 @@ def store_fun_fact(date, day_info, fact_info):
     existing_fact = cursor.fetchone()
     
     if existing_fact:
-        print(f"Fun fact for {date.strftime('%Y-%m-%d')} already exists. Skipping.")
+        logger.info(f"Fun fact for {date.strftime('%Y-%m-%d')} already exists. Skipping.")
         cursor.close()
         conn.close()
         return
@@ -170,20 +187,25 @@ def main():
     # Get current date
     current_date = datetime.now()
     
+    # Check if fact already exists for today
+    if check_fact_exists(current_date):
+        logger.info(f"Fact for {current_date.strftime('%Y-%m-%d')} already exists. Exiting.")
+        return
+    
     # Get the muse info for today
     day_info = get_muse_for_today()
     used_kingdom_life = get_used_kingdom_life(day_info['muse'])
 
     # Generate fun fact
-    print(f"Generating fun fact for {day_info['muse']} ({day_info['cause']}) avoiding {used_kingdom_life} - ...")
+    logger.info(f"Generating fun fact for {day_info['muse']} ({day_info['cause']}) avoiding {used_kingdom_life} - ...")
     fact_info = generate_fun_fact(day_info, used_kingdom_life)
 
     # Store in database
     store_fun_fact(current_date, day_info, fact_info)
     
-    print(f"Successfully generated and stored fun fact about {fact_info['animal_subject']}")
-    print(f"Fun fact: {fact_info['fun_fact']}")
-    print(f"and question asked: {fact_info['question_asked']}")
+    logger.info(f"Successfully generated and stored fun fact about {fact_info['animal_subject']}")
+    logger.info(f"Fun fact: {fact_info['fun_fact']}")
+    logger.info(f"and question asked: {fact_info['question_asked']}")
 
 if __name__ == "__main__":
     main()

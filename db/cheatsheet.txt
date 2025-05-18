@@ -1,0 +1,10 @@
+# tables
+\dt
+# table
+\d <table-name>
+
+# check structure table
+\d daily_facts
+\d inspirations
+
+docker exec -it muse-observatory-db psql -U museuser -d muse_observatory
