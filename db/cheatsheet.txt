@@ -8,3 +8,5 @@
 \d inspirations
 
 docker exec -it muse-observatory-db psql -U museuser -d muse_observatory
+
+docker-compose build && docker-compose up

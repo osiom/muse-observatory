@@ -144,8 +144,8 @@ def apply_styles(muse_name: str):
         }}
         
         .fun-fact {{
-            font-size: 24px;
-            font-style: italic;
+            font-size: 30px;
+            font-style: normal;
             text-align: center;
             line-height: 1.6;
             margin: 0;

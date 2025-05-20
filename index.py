@@ -20,6 +20,7 @@ def landing_page():
             overflow: hidden;
             font-family: 'Cormorant Garamond', serif;
             cursor: pointer;
+            background-color: black; /* Ensures black fallback */
         }}
         .fullscreen-image {{
             position: fixed;
@@ -32,9 +33,11 @@ def landing_page():
             background-position: center;
             transition: transform 1s;
             transform-style: preserve-3d;
+            backface-visibility: hidden; /* Important for 3D transforms */
         }}
         .fullscreen-image.flipped {{
             transform: rotateY(180deg);
+            background-color: rgba(0, 0, 0, 0.3); /* Black with 30% opacity */
         }}
         .prompt {{
             position: fixed;
@@ -48,6 +51,7 @@ def landing_page():
             font-weight: 600;
             text-shadow: 0 2px 4px rgba(0,0,0,0.5);
             pointer-events: none;
+            z-index: 10; /* Ensure text stays above everything */
         }}
     </style>
     ''')
@@ -59,7 +63,7 @@ def landing_page():
     # 4. Handle both click and Enter key
     def flip_and_go():
         image.classes(add='flipped')
-        ui.timer(0.5, lambda: ui.navigate.to('/observatory'), once=True)
+        ui.timer(0.0000000000001, lambda: ui.navigate.to('/observatory'), once=True)
     
     # Click anywhere on the page
     image.on('click', flip_and_go)

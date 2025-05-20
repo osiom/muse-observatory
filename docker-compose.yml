@@ -31,6 +31,9 @@ services:
         condition: service_healthy
     ports:
       - "8080:8080"
+    volumes:
+      - ./:/app
+      - postgres-data:/var/lib/postgresql/data
     environment:
       - DB_HOST=postgres
       - DB_PORT=5432
