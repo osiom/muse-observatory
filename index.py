@@ -50,12 +50,13 @@ def main():
             z-index: -1;
         }
         
-        .terminal-container {
-            position: relative;
+        .center-container {
             display: flex;
             flex-direction: column;
+            justify-content: center;
             align-items: center;
-            z-index: 10;
+            height: 100vh;
+            width: 100%;
         }
         
         .terminal {
@@ -123,7 +124,7 @@ def main():
             to { opacity: 1; }
         }
         
-        .telescope {
+        .telescope-emoji {
             font-size: 4rem;
             margin-top: 2rem;
             animation: float 3s ease-in-out infinite;
@@ -142,20 +143,26 @@ def main():
     # Create noise background
     with screen:
         ui.element('div').classes('noise')
-        
-        # Create terminal content
-        with ui.element('div').classes('terminal-container'):
-            with ui.element('div').classes('terminal'):
-                ui.element('div').classes('init-text').props('innerHTML=init observatory<span class="dots"><span>.</span><span>.</span><span>.</span></span>')
-                ui.element('div').classes('init-text').props('innerHTML=<span class="dots"><span>.</span><span>.</span><span>.</span></span>')
-                prompt = ui.label("Press Enter or click to begin").classes('prompt')
+    
+    # Centering container
+    with ui.element('div').classes('center-container'):
+        with ui.element('div').classes('terminal'):
+            # First line with text and animated dots
+            with ui.element('div').classes('init-text'):
+                ui.html('init observatory')
+                with ui.element('span').classes('dots'):
+                    ui.html('<span>.</span><span>.</span><span>.</span>')
             
-            ui.element('div').classes('telescope').props('innerHTML=🔭')
+            # Prompt line
+            prompt = ui.label("press enter...").classes('prompt')
+        
+        # Telescope emoji
+        ui.html('<div class="telescope-emoji">🔭</div>')
 
     # Handle TV closing effect
     def tv_close_and_go():
         screen.classes(add='tv-close')
-        ui.timer(0.4, lambda: ui.navigate.to('/observatory'), once=True)
+        ui.timer(0.33, lambda: ui.navigate.to('/observatory'), once=True)
     
     # Set up click handlers
     screen.on('click', tv_close_and_go)
