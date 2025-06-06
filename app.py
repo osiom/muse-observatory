@@ -1,150 +1,129 @@
-import os
-import time
-import base64
+from datetime import datetime
+from typing import Dict, Any, List
 import uuid
 import random
-from datetime import datetime
-from typing import Dict, Any
-
-from psycopg2 import pool
-from nicegui import app, ui
+import base64
 from psycopg2.extras import RealDictCursor
-from dotenv import load_dotenv
+from nicegui import ui
+
+from config.db import get_db_connection, return_db_connection
+from config.styles import MUSE_COLORS, get_cosmic_css
+from utils.media import get_base64_comet
 from logger import get_logger
-from typing import List, Dict, Any
+from utils.projects import get_project_response
 
-from index import landing_page
-from projects import get_project_response
-
-# Initialize
 logger = get_logger(__name__)
-os.environ['TZ'] = 'Europe/Berlin'  # Set timezone early in your app
-time.tzset()  # Apply the timezone
-load_dotenv()
-connection_pool = None
-
-# Muse Color Palette
-MUSE_COLORS = {
-    "Lunes": "#5783A6",
-    "Ares": "#D54D2E",
-    "Rabu": "#8CB07F",
-    "Thunor": "#F8D86A",
-    "Shukra": "#5E47A1",
-    "Dosei": "#7F49A2",  # Your purple color for Dosei
-    "Solis": "#D48348"
-}
-
-# Database config
-DB_CONFIG = {
-    "dbname": os.getenv("DB_NAME", "muse_observatory"),
-    "user": os.getenv("DB_USER", "museuser"),
-    "password": os.getenv("DB_PASSWORD", "musepassword"),
-    "host": os.getenv("DB_HOST", "postgres"),
-    "port": os.getenv("DB_PORT", "5432"),
-}
-
-def init_db_pool():
-    """Initialize the connection pool"""
-    global connection_pool
-    try:
-        connection_pool = pool.SimpleConnectionPool(
-            minconn=1,      # Minimum number of connections
-            maxconn=10,     # Maximum number of connections
-            **DB_CONFIG
-        )
-        logger.info("Database connection pool initialized")
-    except Exception as e:
-        logger.error(f"Error initializing connection pool: {e}")
-        raise
-
-def get_db_connection():
-    """Get a connection from the pool"""
-    if not connection_pool:
-        init_db_pool()
-    return connection_pool.getconn()
-
-def return_db_connection(conn):
-    """Return a connection to the pool"""
-    if connection_pool:
-        connection_pool.putconn(conn)
-
-def close_db_pool():
-    """Close all connections in the pool"""
-    if connection_pool:
-        connection_pool.closeall()
-        logger.info("Database connection pool closed")
-
-def get_base64_gif(gif_path: str) -> str:
-    """Convert GIF to base64 with fallback"""
-    try:
-        with open(gif_path, "rb") as f:
-            return base64.b64encode(f.read()).decode()
-    except:
-        with open("backgrounds/cocoex.gif", "rb") as f:
-            return base64.b64encode(f.read()).decode()
-
-def get_todays_gif() -> str:
-    """Get today's GIF path"""
-    gif_paths = {
-        0: "backgrounds/lunes.gif",
-        1: "backgrounds/ares.gif",
-        2: "backgrounds/rabu.gif",
-        3: "backgrounds/thunor.gif",
-        4: "backgrounds/shukra.gif",
-        5: "backgrounds/dosei.gif",  # Saturday - Dosei
-        6: "backgrounds/solis.gif",
-    }
-    return gif_paths.get(datetime.now().weekday(), "backgrounds/cocoex.gif")
 
 def apply_styles(muse_name: str):
-    """Apply dynamic styles"""
-    color = MUSE_COLORS.get(muse_name, "#7F49A2")  # Default to Dosei purple
+    """Integrated styles combining styles.py with terminal effects and cosmic enhancements"""
+    color = MUSE_COLORS.get(muse_name, "#7F49A1")
     
-    ui.add_head_html(f'''
+    # 1. Base cosmic styles from styles.py
+    ui.add_head_html(get_cosmic_css(muse_name))
+    ui.add_head_html('''
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=swap');
-        
-        body {{
-            background-image: url("data:image/gif;base64,{get_base64_gif(get_todays_gif())}");
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            margin: 0;
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            color: white;
+        .logo-container {
+            position: fixed;
+            top: 20px;
+            left: 0;
+            right: 0;
             display: flex;
             justify-content: center;
-            min-height: 100vh;
-        }}
+            z-index: 1000;
+        }
+        
+        .logo-img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+    </style>
+    ''')
 
-        .main-container {{
-            width: 100%;
-            max-width: 900px;
-            padding: 2rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 0 !important;
-            padding: 0 !important;
+    # 3. Terminal text animation (new)
+    ui.add_head_html(f'''
+    <style>
+        /* Question terminal styling */
+        .terminal-question {{
+            position: relative;
+            display: inline-block;
+            min-width: 20px;
+        }}
+        .terminal-question::after {{
+            content: '|';
+            position: absolute;
+            right: -10px;
+            color: {color};
+            animation: blink 1s step-end infinite;
+            visibility: hidden; /* Initially hidden */
+        }}
+        .terminal-question.completed::after {{
+            visibility: visible; /* Show when typing done */
+        }}
+        @keyframes blink {{
+            from, to {{ opacity: 0; }}
+            50% {{ opacity: 1; }}
+        }}
+    </style>
+
+    <script>
+        function typeQuestion(element) {{
+            const text = element.textContent;
+            element.textContent = '';
+            element.classList.remove('completed');
+            
+            let i = 0;
+            const speed = 70; // Medium typing speed
+            
+            function type() {{
+                if (i < text.length) {{
+                    element.textContent += text.charAt(i);
+                    i++;
+                    setTimeout(type, speed);
+                }} else {{
+                    element.classList.add('completed'); // Triggers cursor visibility
+                }}
+            }}
+            type();
         }}
         
+        document.addEventListener('DOMContentLoaded', () => {{
+            // Start typing after slight delay for visual polish
+            setTimeout(() => {{
+                document.querySelectorAll('.terminal-question').forEach(typeQuestion);
+            }}, 500);
+        }});
+    </script>
+    ''')
+
+    ui.add_head_html(f'''
+    <style>
+        .main-container {{
+            width: 100%;
+            max-width: 900px;  /* Adjust as needed */
+            margin: 0 auto;
+            padding: 2rem;
+            text-align: center; /* Center text content */
+        }}
+
+        /* Text styles */
         .muse-title {{
-            font-size: 56px;
+            font-size: 52px;
             font-weight: bold;
             text-align: center;
             margin: 0;
             text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }}
-        
+
         .muse-subtitle {{
-            font-size: 32px;
+            font-size: 24px;
             text-align: center;
             margin: 0;
             text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }}
-        
+
         .fun-fact {{
-            font-size: 30px;
+            font-size: 22px;
             font-style: normal;
             text-align: center;
             line-height: 1.6;
@@ -152,7 +131,8 @@ def apply_styles(muse_name: str):
             max-width: 800px;
             text-shadow: 0 2px 2px rgba(0,0,0,0.3);
         }}
-        
+
+        /* Input section */
         .input-section {{
             width: 100%;
             max-width: 800px;
@@ -162,44 +142,75 @@ def apply_styles(muse_name: str):
             align-items: center;
         }}
 
-        /* Make the typed text even more visible */
-        .nicegui-input {{
-            color: #111 !important;
-            font-family: 'Cormorant Garamond', Georgia, serif !important;
+        /* Form elements */
+        .clean-input {{
+            width: 65% !important;
+            min-height: 100px !important;
+            margin: 0 auto !important;
+            font-size: 16px !important;
+            background: white !important;
+            color: black !important;
+            border: 2px solid {color} !important;
+            border-radius: 12px !important;
+            padding: 16px !important;
+            font-family: 'Cormorant Garamond' !important;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }}
 
+        .clean-input::placeholder {{
+            color: #666 !important;
+            font-style: italic;
+            opacity: 1 !important;
+        }}
+
+        /* Buttons */
         .muse-button {{
             background-color: {color} !important;
             color: white !important;
-            font-size: 20px !important;
-            font-weight: 600;
+            font-size: 16px !important;
             padding: 12px 36px !important;
             border: none !important;
             border-radius: 8px !important;
             cursor: pointer;
             transition: all 0.3s;
-            align-items: center;
+            margin: 0 auto;
         }}
-        
-        .muse-button:hover {{
-            opacity: 0.9;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }}
-        
-        .source-link {{
-            color: white !important;
-            text-decoration: underline;
-            font-size: 18px;
-        }}
-    </style>
-    ''')
 
-    ui.add_head_html(f'''
-    <style>
-        /* QUESTION TEXT - ABOVE INPUT */
+        .muse-button:hover {{
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }}
+
+        /* Dialog styles */
+        .dialog-button {{
+            background-color: transparent !important;
+            color: {color} !important;
+            font-size: 16px !important;
+            padding: 8px 24px !important;
+            border: 3px solid {color} !important;
+            border-radius: 24px !important;
+            cursor: pointer;
+            transition: all 0.3s;
+        }}
+
+        .dialog-button:hover {{
+            background-color: {color} !important;
+            color: white !important;
+        }}
+
+        .muse-title,
+        .muse-subtitle,
+        .fun-fact,
+        .question-text,
+        .source-link {{
+            text-align: center !important;
+            margin-left: auto;
+            margin-right: auto;
+        }}
+
+        /* Question text */
         .question-text {{
-            font-size: 24px;
+            font-size: 21px;
             font-style: italic;
             text-align: center;
             margin: 20px auto;
@@ -210,7 +221,7 @@ def apply_styles(muse_name: str):
             padding: 0 20px;
         }}
 
-        /* INPUT CONTAINER */
+        /* Input container */
         .input-container {{
             width: 100%;
             display: flex;
@@ -219,29 +230,7 @@ def apply_styles(muse_name: str):
             margin: 0 auto;
         }}
 
-        /* TEXTAREA STYLING */
-        .clean-input {{
-            width: 65% !important;
-            min-height: 100px !important;
-            margin: 0 auto !important;
-            font-size: 20px !important;
-            background: white !important;
-            color: black !important;
-            border: 2px solid {color} !important;
-            border-radius: 12px !important;
-            padding: 16px !important;
-            font-family: 'Cormorant Garamond' !important;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }}
-
-        /* PLACEHOLDER TEXT */
-        .clean-input::placeholder {{
-            color: #666 !important;
-            font-style: italic;
-            opacity: 1 !important;
-        }}
-
-        /* PROMPT TEXT BELOW INPUT */
+        /* Prompt text */
         .write-prompt {{
             text-align: center;
             color: white;
@@ -250,25 +239,13 @@ def apply_styles(muse_name: str):
             font-size: 18px;
             text-shadow: 0 1px 3px rgba(0,0,0,0.5);
         }}
-         /* CENTERED BUTTON CONTAINER */
+
+        /* Button container */
         .button-container {{
             display: flex;
             justify-content: center;
             width: 100%;
             margin: 10px;
-        }}
-
-        /* BUTTON STYLING */
-        .muse-button {{
-            background-color: {color} !important;
-            color: white !important;
-            font-size: 20px !important;
-            padding: 12px 36px !important;
-            border: none !important;
-            border-radius: 8px !important;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin: 0 auto; /* Additional centering */
         }}
     </style>
     ''')
@@ -304,6 +281,7 @@ def get_todays_fact() -> Dict[str, Any]:
         if conn:
             return_db_connection(conn)  # Return to pool instead of closing
 
+
 def save_response(fact_info: Dict[str, Any], user_input: str, projects: List[Dict]):
     """Save both inspiration and projects with connection pooling"""
     conn = None
@@ -311,23 +289,20 @@ def save_response(fact_info: Dict[str, Any], user_input: str, projects: List[Dic
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        
+        inspiration_id = str(uuid.uuid4())
         # Save inspiration
         cursor.execute("""
             INSERT INTO inspirations 
             (date, id, day_of_week, social_cause, muse, user_inspiration)
             VALUES (%s, %s, %s, %s, %s, %s)
-            RETURNING id
             """, (
                 datetime.now().date(),
-                str(uuid.uuid4()),
+                inspiration_id,
                 datetime.now().strftime('%A'),
                 fact_info['social_cause'],
                 fact_info['muse'],
                 user_input
             ))
-        
-        inspiration_id = cursor.fetchone()[0]
         
         # Save projects
         for project in projects:
@@ -395,14 +370,10 @@ def show_projects_dialog(projects: List[Dict], muse_name: str, muse_color: str) 
             # Single close button with muse color
             ui.button(
                 "Close", 
-                on_click=lambda: dialog.submit(True)  # Changed to submit True
-            ).classes("w-full mt-4 text-white").style(
-                f"background-color: {muse_color} !important;"
-                "font-weight: 600;"
-                "padding: 12px;"
-            )
-    
+                on_click=lambda: dialog.submit(True)
+            ).classes("dialog-button w-full mt-4")
     return dialog
+
 
 async def handle_share(fact_info: Dict[str, Any], user_input: str, share_button: ui.button):
     """Handle the share button click with cosmic starry loader"""
@@ -440,12 +411,16 @@ async def handle_share(fact_info: Dict[str, Any], user_input: str, share_button:
                 }}
                 .shooting-star {{
                     position: absolute;
-                    width: 100px;
-                    height: 2px;
-                    background: linear-gradient(90deg, transparent, {muse_color});
+                    width: 6px;
+                    height: 6px;
+                    background: url("data:image/png;base64,{get_base64_comet(fact_info['muse'], muse_color)}");
+                    background-size: contain;
+                    background-repeat: no-repeat;
+                    background-position: center;
                     transform: rotate(-45deg);
                     animation: shooting-star 3s linear infinite;
                     opacity: 0;
+                    filter: drop-shadow(0 0 5px {muse_color});
                 }}
                 .cosmic-dust {{
                     position: absolute;
@@ -492,7 +467,7 @@ async def handle_share(fact_info: Dict[str, Any], user_input: str, share_button:
                 ''')
             
             # Add occasional shooting stars
-            for _ in range(3):
+            for _ in range(5):
                 top = f"{random.uniform(0, 50)}%"
                 left = f"{random.uniform(-20, 0)}%"
                 delay = f"{random.uniform(0, 8)}s"
@@ -535,63 +510,46 @@ async def handle_share(fact_info: Dict[str, Any], user_input: str, share_button:
     finally:
         loader.delete()
 
-@ui.page('/')
-def landing():
-    landing_page()
-
 @ui.page("/observatory")
-def main():
-    """Main page with proper session handling"""
+def observatory():
     fact_info = get_todays_fact()
     apply_styles(fact_info['muse'])
     
     with ui.column().classes("main-container"):
-        # Logo and header
-        with open("backgrounds/logo.png", "rb") as img_file:
-            logo_base64 = base64.b64encode(img_file.read()).decode()
-            ui.html(f'''
-                <a href="https://cocoex.xyz" target="_blank" 
-                    style="display:block; width:60px; height:60px; margin:10px auto;">
-                    <img src="data:image/png;base64,{logo_base64}" 
-                        style="width:100%; height:100%; object-fit: contain;">
-                </a>
-            ''')
-
-        # Header
-        ui.label("Today's Muse").classes("muse-subtitle")
-        ui.label(fact_info['muse'].upper()).classes("muse-title")
-        ui.label(f"for {fact_info['social_cause']}").classes("muse-subtitle")
+        # Background elements first
+        ui.html('<div class="cosmic-overlay"></div>')
+        ui.html('<div class="static-overlay"></div>')
         
-        # Fact Display
-        ui.label(fact_info['fun_fact']).classes("fun-fact")
-        ui.link("Source", fact_info['fact_check_link']).classes("source-link")
-        
-        # Question text
-        ui.label(fact_info['question_asked']).classes("question-text")
-        with ui.column().classes("w-full input-container"):
-            user_input = ui.textarea(placeholder="Share your inspiration (max 500 characters)...") \
-                .classes("clean-input") \
-                .props('maxlength=500')
+        # Content with forced center alignment
+        with ui.column().classes("w-full text-center"):
+            # Logo and headers
+            with open("static/logo.png", "rb") as img_file:
+                logo_base64 = base64.b64encode(img_file.read()).decode()
+                ui.html(f'''
+                <div class="logo-container">
+                    <a href="https://cocoex.xyz" target="_blank">
+                        <img src="data:image/png;base64,{logo_base64}" class="logo-img">
+                    </a>
+                </div>
+                ''')
+                        
+            # Text elements with center alignment
+            ui.label("Today's Muse").classes("muse-subtitle")
+            ui.label(fact_info['muse'].upper()).classes("muse-title text-center")
+            ui.label(f"for {fact_info['social_cause']}").classes("muse-subtitle text-center")
             
-            # Centered share button container
-            with ui.row().classes("w-full justify-center") as button_container:
-                share_button = ui.button(
+            # Terminal-style elements
+            ui.label(fact_info['fun_fact']).classes("fun-fact text-center")
+            ui.link("Source", fact_info['fact_check_link']).classes("source-link text-center")
+            
+            # Question and input
+            ui.label(fact_info['question_asked']).classes("question-text terminal-question text-center")
+            
+            with ui.column().classes("input-container w-full mx-auto"):
+                user_input = ui.textarea(placeholder="Share your inspiration...") \
+                    .classes("clean-input mx-auto")
+                
+                ui.button(
                     f"SHARE WITH {fact_info['muse'].upper()}",
-                    on_click=lambda: handle_share(fact_info, user_input.value, share_button)
-                ).classes("muse-button")
-
-
-if __name__ in {"__main__", "__mp_main__"}:
-    main()
-    logger.info(f"Looking at the stars orbiting in the cocoex's universe! 🔭")
-    try:
-        ui.run(
-            port=8080,
-            title="Muse Observatory",
-            favicon="🔭",
-            reload=False
-        )
-    except Exception as e:
-        logger.error(f"Error starting UI: {e}")
-    finally:
-        close_db_pool()
+                    on_click=lambda: handle_share(fact_info, user_input.value)
+                ).classes("muse-button mx-auto")
