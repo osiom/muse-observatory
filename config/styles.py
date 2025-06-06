@@ -36,8 +36,9 @@ def get_cosmic_css(muse_name: str) -> str:
             height: 100%;
             z-index: -1;
             background:
-                radial-gradient(circle at 20% 30%, {color}33, transparent 30%),
-                radial-gradient(circle at 80% 70%, {color}44, transparent 25%);
+                radial-gradient(circle at 30% 50%, {color}33 0%, transparent 30%),
+                radial-gradient(circle at 80% 70%, {color}44 0%, transparent 25%),
+                linear-gradient(to bottom, #2a1a4a, #5E47A1);
         }}
 
         .static-overlay {{
@@ -54,7 +55,7 @@ def get_cosmic_css(muse_name: str) -> str:
             opacity: 0.2;
             z-index: -1;
             pointer-events: none;
-            animation: static 0.15s infinite;
+            animation: static 0.2s infinite;
         }}
 
         @keyframes static {{
@@ -64,11 +65,9 @@ def get_cosmic_css(muse_name: str) -> str:
 
         .particle {{
             position: absolute;
-            background-color: rgba(209, 196, 233, 0.3);
+            background-color: rgba(255, 255, 255, 0.5);
             border-radius: 50%;
             pointer-events: none;
-            filter: blur(0.5px);
-            z-index: -1;
         }}
     </style>
     """
@@ -81,10 +80,11 @@ def get_particle_js() -> str:
                 const particle = document.createElement('div');
                 particle.className = 'particle';
                 
-                const size = Math.random() * 4 + 3;
+                const size = Math.random() * 3 + 1;
                 const posX = Math.random() * window.innerWidth;
                 const posY = Math.random() * window.innerHeight;
-                const opacity = Math.random() * 0.3 + 0.1;
+                const opacity = Math.random() * 0.5 + 0.1;
+                const color = `rgba(16, 16, 16, ${opacity})`;
                 
                 particle.style.width = `${size}px`;
                 particle.style.height = `${size}px`;

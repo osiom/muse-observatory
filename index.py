@@ -21,6 +21,10 @@ def main():
             overflow: hidden;
             font-family: 'Cormorant Garamond', serif;
             cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
         
         .screen-container {
@@ -30,8 +34,9 @@ def main():
             width: 100%;
             height: 100%;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
             transition: all 0.4s ease-in-out;
             clip-path: inset(0% 0% 0% 0%);
         }
@@ -50,21 +55,13 @@ def main():
             z-index: -1;
         }
         
-        .center-container {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            width: 100%;
-        }
-        
         .terminal {
-            background-color: rgba(0, 0, 0, 0.9);
+            background-color: #000 !important; /* Changed to solid black */
             border: 1px solid #222;
             padding: 2rem;
             width: 400px;
             text-align: center;
+            margin-bottom: 2rem;
         }
         
         .init-text {
@@ -73,11 +70,11 @@ def main():
             color: white;
             display: inline-block;
             position: relative;
-            margin-bottom: 1rem;
         }
         
         .init-text::after {
             content: '|';
+            color: white;
             position: absolute;
             right: -10px;
             animation: blink 0.75s step-end infinite;
@@ -107,6 +104,17 @@ def main():
             to { opacity: 1; }
         }
         
+        .telescope {
+            font-size: 4rem;
+            margin-top: 2rem;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
         .prompt {
             color: white;
             font-size: 1.5rem;
@@ -123,17 +131,6 @@ def main():
         @keyframes fade-in {
             to { opacity: 1; }
         }
-        
-        .telescope-emoji {
-            font-size: 4rem;
-            margin-top: 2rem;
-            animation: float 3s ease-in-out infinite;
-        }
-        
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
     </style>
     ''')
 
@@ -144,20 +141,18 @@ def main():
     with screen:
         ui.element('div').classes('noise')
     
-    # Centering container
-    with ui.element('div').classes('center-container'):
-        with ui.element('div').classes('terminal'):
-            # First line with text and animated dots
-            with ui.element('div').classes('init-text'):
-                ui.html('init observatory')
-                with ui.element('span').classes('dots'):
-                    ui.html('<span>.</span><span>.</span><span>.</span>')
-            
-            # Prompt line
-            prompt = ui.label("press enter...").classes('prompt')
+    # Terminal with solid black background
+    with ui.element('div').classes('terminal'):
+        with ui.element('div').classes('init-text'):
+            ui.html('init observatory')
+            with ui.element('span').classes('dots'):
+                ui.html('<span>.</span><span>.</span><span>.</span>')
         
-        # Telescope emoji
-        ui.html('<div class="telescope-emoji">🔭</div>')
+        # Prompt line
+        prompt = ui.label("press enter...").classes('prompt')
+    
+    # Telescope emoji
+    ui.html('<div class="telescope">🔭</div>')
 
     # Handle TV closing effect
     def tv_close_and_go():

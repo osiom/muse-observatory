@@ -505,7 +505,7 @@ async def handle_share(fact_info: Dict[str, Any], user_input: str, share_button:
         save_response(fact_info, user_input, projects_data['projects'])
         ui.notify(f"Shared with the {fact_info['muse']}!", type='positive')
     except Exception as e:
-        ui.notify(f"Stellar interference: {str(e)}", type='negative')
+        ui.notify(f"Sandstorm turbolences!: {str(e)}", type='negative')
         logger.error(f"Share error: {str(e)}")
     finally:
         loader.delete()
@@ -549,7 +549,7 @@ def observatory():
                 user_input = ui.textarea(placeholder="Share your inspiration...") \
                     .classes("clean-input mx-auto")
                 
-                ui.button(
+                share_button = ui.button(
                     f"SHARE WITH {fact_info['muse'].upper()}",
-                    on_click=lambda: handle_share(fact_info, user_input.value)
+                    on_click=lambda: handle_share(fact_info, user_input.value, share_button)
                 ).classes("muse-button mx-auto")
