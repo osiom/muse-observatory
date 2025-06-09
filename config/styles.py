@@ -8,6 +8,16 @@ MUSE_COLORS = {
     "Solis": "#D48348"
 }
 
+MUSE_FONTS = {
+    "Lunes": "#FBFBFB",
+    "Ares": "#000000",
+    "Rabu": "#000000",
+    "Thunor": "#FFFFFF",
+    "Shukra": "#FFFFFF",
+    "Dosei": "#FFFFFF",
+    "Solis": "#000000"    
+}
+
 def get_cosmic_css(muse_name: str) -> str:
     color = MUSE_COLORS.get(muse_name, "#7F49A2")
     return f"""
