@@ -7,19 +7,17 @@ from psycopg2.extras import RealDictCursor
 from nicegui import ui
 
 from config.db import get_db_connection, return_db_connection
-from config.styles import MUSE_COLORS, get_cosmic_css
+from config.styles import get_cosmic_css
+from models.muse import Oracle
 from utils.media import get_base64_comet
 from logger import get_logger
 from utils.projects import get_project_response
 
 logger = get_logger(__name__)
 
-def apply_styles(muse_name: str):
+
+def apply_styles(color: str, support_color: str, astro_color: str):
     """Integrated styles combining styles.py with terminal effects and cosmic enhancements"""
-    color = MUSE_COLORS.get(muse_name, "#7F49A1")
-    
-    # 1. Base cosmic styles from styles.py
-    ui.add_head_html(get_cosmic_css(muse_name))
     ui.add_head_html('''
     <style>
         .logo-container {
@@ -38,63 +36,11 @@ def apply_styles(muse_name: str):
             object-fit: contain;
         }
     </style>
-    ''')
-
-    # 3. Terminal text animation (new)
-    ui.add_head_html(f'''
-    <style>
-        /* Question terminal styling */
-        .terminal-question {{
-            position: relative;
-            display: inline-block;
-            min-width: 20px;
-        }}
-        .terminal-question::after {{
-            content: '|';
-            position: absolute;
-            right: -10px;
-            color: {color};
-            animation: blink 1s step-end infinite;
-            visibility: hidden; /* Initially hidden */
-        }}
-        .terminal-question.completed::after {{
-            visibility: visible; /* Show when typing done */
-        }}
-        @keyframes blink {{
-            from, to {{ opacity: 0; }}
-            50% {{ opacity: 1; }}
-        }}
-    </style>
-
-    <script>
-        function typeQuestion(element) {{
-            const text = element.textContent;
-            element.textContent = '';
-            element.classList.remove('completed');
-            
-            let i = 0;
-            const speed = 70; // Medium typing speed
-            
-            function type() {{
-                if (i < text.length) {{
-                    element.textContent += text.charAt(i);
-                    i++;
-                    setTimeout(type, speed);
-                }} else {{
-                    element.classList.add('completed'); // Triggers cursor visibility
-                }}
-            }}
-            type();
-        }}
-        
-        document.addEventListener('DOMContentLoaded', () => {{
-            // Start typing after slight delay for visual polish
-            setTimeout(() => {{
-                document.querySelectorAll('.terminal-question').forEach(typeQuestion);
-            }}, 500);
-        }});
-    </script>
-    ''')
+    ''')    
+    # 1. Base cosmic styles from styles.py
+    css, stars = get_cosmic_css(color, support_color, astro_color)
+    ui.add_head_html(css)
+    ui.add_body_html(stars)
 
     ui.add_head_html(f'''
     <style>
@@ -210,15 +156,13 @@ def apply_styles(muse_name: str):
 
         /* Question text */
         .question-text {{
-            font-size: 21px;
-            font-style: italic;
+            font-size: 20px;
+            font-style: normal;
             text-align: center;
-            margin: 20px auto;
+            line-height: 1.6;
             max-width: 800px;
             color: white;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-            line-height: 1.4;
-            padding: 0 20px;
+            text-shadow: 0 2px 2px rgba(0,0,0,0.3);
         }}
 
         /* Input container */
@@ -250,37 +194,41 @@ def apply_styles(muse_name: str):
     </style>
     ''')
 
-def get_todays_fact() -> Dict[str, Any]:
-    conn = None
-    cursor = None
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
-        
-        today = datetime.now().strftime('%Y-%m-%d')
-        cursor.execute("SELECT * FROM daily_facts WHERE date = %s", (today,))
-        return cursor.fetchone() or {
-            'muse': 'cocoex',
-            'social_cause': 'cocoex',
-            'fun_fact': 'The oracle didnt answer today!',
-            'question_asked': 'What is the meaning of life?',
-            'fact_check_link': '#'
-        }
-    except Exception as e:
-        logger.error(f"Database error: {e}")
-        return {
-            'muse': 'cocoex',
-            'social_cause': 'Database Error',
-            'fun_fact': 'Could not fetch fact today',
-            'question_asked': 'Try again later?',
-            'fact_check_link': '#'
-        }
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            return_db_connection(conn)  # Return to pool instead of closing
+    # 3. Terminal text animation (new)
+    ui.add_head_html(f'''
+    <style>
+        /* Simplified terminal text typing effect */
+        .terminal-question {{
+            display: inline-block;
+            white-space: pre;
+        }}
+    </style>
 
+    <script>
+        function typeQuestion(element) {{
+            const text = element.textContent;
+            element.textContent = '';
+
+            let i = 0;
+            const speed = 70;
+
+            function type() {{
+                if (i < text.length) {{
+                    element.textContent += text.charAt(i);
+                    i++;
+                    setTimeout(type, speed);
+                }}
+            }}
+            type();
+        }}
+
+        document.addEventListener('DOMContentLoaded', () => {{
+            setTimeout(() => {{
+                document.querySelectorAll('.terminal-question').forEach(typeQuestion);
+            }}, 500);
+        }});
+    </script>
+    ''')
 
 def save_response(fact_info: Dict[str, Any], user_input: str, projects: List[Dict]):
     """Save both inspiration and projects with connection pooling"""
@@ -374,18 +322,19 @@ def show_projects_dialog(projects: List[Dict], muse_name: str, muse_color: str) 
             ).classes("dialog-button w-full mt-4")
     return dialog
 
-
-async def handle_share(fact_info: Dict[str, Any], user_input: str, share_button: ui.button):
+async def handle_share(oracle_day: Oracle, user_input: str, share_button: ui.button):
     """Handle the share button click with cosmic starry loader"""
     if not user_input.strip():
         ui.notify("Please write something first", type='warning')
         return
     
-    muse_color = MUSE_COLORS[fact_info['muse']]
-    
-    # Create cosmic loader with black background
-    with ui.column().classes("fixed-full items-center justify-center bg-black z-50") as loader:
-        ui.label("Looking through the telescope...").classes("text-3xl font-bold text-white mb-4")
+    # Create cosmic loader with transparent background
+    with ui.column().classes("fixed inset-0 items-center justify-center bg-black bg-opacity-30") as loader:
+        loader.style("z-index: 9999; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;")
+        
+        # Loading message with higher z-index than stars
+        with ui.column().classes("relative z-50 bg-black bg-opacity-70 p-8 rounded-xl"):
+            ui.label("Looking through the telescope...").classes("text-3xl font-bold text-white mb-4")
         
         # Add HTML/CSS for animated cosmic background
         ui.add_head_html(f'''
@@ -396,95 +345,118 @@ async def handle_share(fact_info: Dict[str, Any], user_input: str, share_button:
                     100% {{ opacity: 0.2; transform: scale(0.5); }}
                 }}
                 @keyframes shooting-star {{
-                    0% {{ transform: translateX(0) translateY(0); opacity: 0; }}
+                    0% {{ transform: translateX(-100px) translateY(-100px) rotate(-45deg); opacity: 0; }}
                     10% {{ opacity: 1; }}
-                    100% {{ transform: translateX(100vw) translateY(100vh); opacity: 0; }}
+                    90% {{ opacity: 1; }}
+                    100% {{ transform: translateX(calc(100vw + 100px)) translateY(calc(100vh + 100px)) rotate(-45deg); opacity: 0; }}
+                }}
+                @keyframes float {{
+                    0%, 100% {{ transform: translateY(0px); }}
+                    50% {{ transform: translateY(-10px); }}
+                }}
+                .cosmic-loader {{
+                    position: fixed !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    width: 100vw !important;
+                    height: 100vh !important;
+                    z-index: 9999 !important;
+                    pointer-events: none;
                 }}
                 .star {{
-                    position: absolute;
-                    background-color: {muse_color};
-                    width: 3px;
-                    height: 3px;
-                    border-radius: 50%;
-                    animation: twinkle 3s infinite ease-in-out;
-                    box-shadow: 0 0 5px 1px {muse_color};
+                    position: absolute !important;
+                    background-color: {oracle_day.astro_color} !important;
+                    width: 3px !important;
+                    height: 3px !important;
+                    border-radius: 50% !important;
+                    animation: twinkle 3s infinite ease-in-out !important;
+                    box-shadow: 0 0 8px 2px {oracle_day.astro_color} !important;
+                    z-index: 10000 !important;
                 }}
                 .shooting-star {{
-                    position: absolute;
-                    width: 6px;
-                    height: 6px;
-                    background: url("data:image/png;base64,{get_base64_comet(fact_info['muse'], muse_color)}");
-                    background-size: contain;
-                    background-repeat: no-repeat;
-                    background-position: center;
-                    transform: rotate(-45deg);
-                    animation: shooting-star 3s linear infinite;
-                    opacity: 0;
-                    filter: drop-shadow(0 0 5px {muse_color});
+                    position: absolute !important;
+                    width: 60px !important;
+                    height: 4px !important;
+                    background: linear-gradient(90deg, {oracle_day.astro_color}, transparent) !important;
+                    border-radius: 2px !important;
+                    animation: shooting-star 2s linear infinite !important;
+                    opacity: 0 !important;
+                    box-shadow: 0 0 10px {oracle_day.astro_color} !important;
+                    z-index: 10000 !important;
                 }}
                 .cosmic-dust {{
-                    position: absolute;
-                    background-color: rgba(255,255,255,0.1);
-                    border-radius: 50%;
+                    position: absolute !important;
+                    background-color: rgba(255,255,255,0.3) !important;
+                    border-radius: 50% !important;
+                    animation: float 4s ease-in-out infinite !important;
+                    z-index: 10000 !important;
                 }}
             </style>
         ''')
         
-        # Container for cosmic elements
-        with ui.element('div').classes('fixed-full overflow-hidden'):
-            # Generate 50 twinkling stars
+        # Container for cosmic elements with proper positioning
+        cosmic_container = ui.element('div')
+        cosmic_container.classes('cosmic-loader')
+        
+        with cosmic_container:
+            # Generate 50 twinkling stars with fixed positioning
+            stars_html = ""
             for _ in range(50):
-                top = f"{random.uniform(0, 100)}%"
-                left = f"{random.uniform(0, 100)}%"
-                delay = f"{random.uniform(0, 3)}s"
-                duration = f"{random.uniform(2, 4)}s"
-                size = f"{random.uniform(2, 5)}px"
+                top = random.uniform(0, 100)
+                left = random.uniform(0, 100)
+                delay = random.uniform(0, 3)
+                duration = random.uniform(2, 4)
+                size = random.uniform(2, 5)
                 
-                ui.html(f'''
+                stars_html += f'''
                     <div class="star" style="
-                        top: {top};
-                        left: {left};
-                        animation-delay: {delay};
-                        animation-duration: {duration};
-                        width: {size};
-                        height: {size};
+                        top: {top}%;
+                        left: {left}%;
+                        animation-delay: {delay}s;
+                        animation-duration: {duration}s;
+                        width: {size}px;
+                        height: {size}px;
                     "></div>
-                ''')
+                '''
             
-            # Add some subtle cosmic dust particles
-            for _ in range(20):
-                top = f"{random.uniform(0, 100)}%"
-                left = f"{random.uniform(0, 100)}%"
-                size = f"{random.uniform(1, 3)}px"
+            # Add cosmic dust particles
+            for _ in range(15):
+                top = random.uniform(0, 100)
+                left = random.uniform(0, 100)
+                size = random.uniform(1, 3)
+                delay = random.uniform(0, 4)
                 
-                ui.html(f'''
+                stars_html += f'''
                     <div class="cosmic-dust" style="
-                        top: {top};
-                        left: {left};
-                        width: {size};
-                        height: {size};
+                        top: {top}%;
+                        left: {left}%;
+                        width: {size}px;
+                        height: {size}px;
+                        animation-delay: {delay}s;
                     "></div>
-                ''')
+                '''
             
-            # Add occasional shooting stars
-            for _ in range(5):
-                top = f"{random.uniform(0, 50)}%"
-                left = f"{random.uniform(-20, 0)}%"
-                delay = f"{random.uniform(0, 8)}s"
-                duration = f"{random.uniform(2, 4)}s"
+            # Add shooting stars
+            for _ in range(3):
+                top = random.uniform(0, 50)
+                left = random.uniform(-10, 0)
+                delay = random.uniform(0, 6)
+                duration = random.uniform(2, 4)
                 
-                ui.html(f'''
+                stars_html += f'''
                     <div class="shooting-star" style="
-                        top: {top};
-                        left: {left};
-                        animation-delay: {delay};
-                        animation-duration: {duration};
+                        top: {top}%;
+                        left: {left}%;
+                        animation-delay: {delay}s;
+                        animation-duration: {duration}s;
                     "></div>
-                ''')
-    
+                '''
+            
+            ui.html(stars_html)
+
     try:
         # Get project recommendations
-        projects_data = await get_project_response(fact_info, user_input)
+        projects_data = await get_project_response(oracle_day, user_input)
         
         if not projects_data or not projects_data.get('projects'):
             ui.notify("No cosmic connections found today", type='info')
@@ -496,24 +468,24 @@ async def handle_share(fact_info: Dict[str, Any], user_input: str, share_button:
         # Show projects dialog
         dialog = show_projects_dialog(
             projects_data['projects'],
-            fact_info['muse'],
-            muse_color
+            oracle_day.muse_name,
+            oracle_day.color
         )
         await dialog
         
         # Save to database
-        save_response(fact_info, user_input, projects_data['projects'])
-        ui.notify(f"Shared with the {fact_info['muse']}!", type='positive')
+        oracle_day.save_response(user_input, projects_data['projects'])
+        ui.notify(f"Shared with the {oracle_day.muse_name}!", type='positive')
     except Exception as e:
-        ui.notify(f"Sandstorm turbolences!: {str(e)}", type='negative')
+        ui.notify(f"Sandstorm turbulences!: {str(e)}", type='negative')
         logger.error(f"Share error: {str(e)}")
     finally:
         loader.delete()
 
-@ui.page("/observatory")
+@ui.page('/observatory')
 def observatory():
-    fact_info = get_todays_fact()
-    apply_styles(fact_info['muse'])
+    oracle_day = Oracle()
+    apply_styles(oracle_day.color, oracle_day.support_color ,oracle_day.astro_color)
     
     with ui.column().classes("main-container"):
         # Background elements first
@@ -535,21 +507,21 @@ def observatory():
                         
             # Text elements with center alignment
             ui.label("Today's Muse").classes("muse-subtitle")
-            ui.label(fact_info['muse'].upper()).classes("muse-title text-center")
-            ui.label(f"for {fact_info['social_cause']}").classes("muse-subtitle text-center")
+            ui.label(oracle_day.muse_name.upper()).classes("muse-title text-center")
+            ui.label(f"for {oracle_day.social_cause}").classes("muse-subtitle text-center")
             
             # Terminal-style elements
-            ui.label(fact_info['fun_fact']).classes("fun-fact text-center")
-            ui.link("Source", fact_info['fact_check_link']).classes("source-link text-center")
+            ui.label(oracle_day.fun_fact).classes("fun-fact text-center")
+            ui.link("Source", oracle_day.fact_check_link).classes("source-link text-center")
             
             # Question and input
-            ui.label(fact_info['question_asked']).classes("question-text terminal-question text-center")
+            ui.label(oracle_day.question_asked).classes("question-text terminal-question text-center")
             
             with ui.column().classes("input-container w-full mx-auto"):
                 user_input = ui.textarea(placeholder="Share your inspiration...") \
                     .classes("clean-input mx-auto")
                 
                 share_button = ui.button(
-                    f"SHARE WITH {fact_info['muse'].upper()}",
-                    on_click=lambda: handle_share(fact_info, user_input.value, share_button)
+                    f"SHARE WITH {oracle_day.muse_name.upper()}",
+                    on_click=lambda: handle_share(oracle_day, user_input.value, share_button)
                 ).classes("muse-button mx-auto")

@@ -1,39 +1,17 @@
-MUSE_COLORS = {
-    "Lunes": "#5783A6",
-    "Ares": "#D54D2E",
-    "Rabu": "#8CB07F",
-    "Thunor": "#F8D86A",
-    "Shukra": "#5E47A1",
-    "Dosei": "#7F49A2",
-    "Solis": "#D48348"
-}
+import random
 
-MUSE_FONTS = {
-    "Lunes": "#FBFBFB",
-    "Ares": "#000000",
-    "Rabu": "#000000",
-    "Thunor": "#FFFFFF",
-    "Shukra": "#FFFFFF",
-    "Dosei": "#FFFFFF",
-    "Solis": "#000000"    
-}
-
-def get_cosmic_css(muse_name: str) -> str:
-    color = MUSE_COLORS.get(muse_name, "#7F49A2")
-    return f"""
+def get_cosmic_css(muse_color: str, support_color: str, astro_color: str) -> tuple[str, str]:
+    css = f"""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=swap');
         
         body {{
-            background: linear-gradient(135deg, #2a1a4a 0%, {color} 100%);
+            background: linear-gradient(135deg, {support_color} 0%, {muse_color} 100%);
             margin: 0;
-            justify-content: center;
-            align-items: center;
             font-family: 'Cormorant Garamond', serif;
             color: #d1c4e9;
             min-height: 100vh;
             padding: 20px;
-            position: relative;
             overflow-x: hidden;
             box-sizing: border-box;
         }}
@@ -46,9 +24,9 @@ def get_cosmic_css(muse_name: str) -> str:
             height: 100%;
             z-index: -1;
             background:
-                radial-gradient(circle at 30% 50%, {color}33 0%, transparent 30%),
-                radial-gradient(circle at 80% 70%, {color}44 0%, transparent 25%),
-                linear-gradient(to bottom, #2a1a4a, #5E47A1);
+                radial-gradient(circle at 30% 50%, {muse_color}33 0%, transparent 30%),
+                radial-gradient(circle at 80% 70%, {muse_color}44 0%, transparent 25%),
+                linear-gradient(to bottom, {muse_color}, {support_color});
         }}
 
         .static-overlay {{
@@ -73,65 +51,133 @@ def get_cosmic_css(muse_name: str) -> str:
             100% {{ background-position: 3px 3px; }}
         }}
 
-        .particle {{
+        @keyframes twinkle {{
+            0% {{ opacity: 0.2; transform: scale(0.5); }}
+            50% {{ opacity: 1; transform: scale(1); }}
+            100% {{ opacity: 0.2; transform: scale(0.5); }}
+        }}
+
+        @keyframes shooting-star-left-to-right {{
+            0% {{ transform: translateX(-100px) translateY(-100px) rotate(-45deg); opacity: 0; }}
+            10% {{ opacity: 1; }}
+            90% {{ opacity: 1; }}
+            100% {{ transform: translateX(calc(100vw + 100px)) translateY(calc(100vh + 100px)) rotate(-45deg); opacity: 0; }}
+        }}
+
+        @keyframes shooting-star-right-to-left {{
+            0% {{ transform: translateX(calc(100vw + 100px)) translateY(-100px) rotate(45deg); opacity: 0; }}
+            10% {{ opacity: 1; }}
+            90% {{ opacity: 1; }}
+            100% {{ transform: translateX(-200px) translateY(calc(100vh + 100px)) rotate(45deg); opacity: 0; }}
+        }}
+
+        @keyframes shooting-star-top-to-bottom {{
+            0% {{ transform: translateY(-100px); opacity: 0; }}
+            10% {{ opacity: 1; }}
+            90% {{ opacity: 1; }}
+            100% {{ transform: translateY(calc(100vh + 100px)); opacity: 0; }}
+        }}
+
+        @keyframes shooting-star-bottom-to-top {{
+            0% {{ transform: translateY(calc(100vh + 100px)); opacity: 0; }}
+            10% {{ opacity: 1; }}
+            90% {{ opacity: 1; }}
+            100% {{ transform: translateY(-100px); opacity: 0; }}
+        }}
+
+        @keyframes float {{
+            0%, 100% {{ transform: translateY(0px); }}
+            50% {{ transform: translateY(-10px); }}
+        }}
+
+        .star, .shooting-star, .cosmic-dust {{
             position: absolute;
-            background-color: rgba(255, 255, 255, 0.5);
-            border-radius: 50%;
+            z-index: 1000;
             pointer-events: none;
+        }}
+
+        .star {{
+            background-color: {astro_color};
+            border-radius: 50%;
+            animation: twinkle 3s infinite ease-in-out;
+            box-shadow: 0 0 3px 1px {astro_color};
+        }}
+
+        .shooting-star {{
+            width: 30px;
+            height: 2px;
+            background: linear-gradient(90deg, {astro_color}, transparent);
+            border-radius: 1px;
+            opacity: 0;
+            box-shadow: 0 0 10px {astro_color};
+        }}
+
+        .cosmic-dust {{
+            background-color: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            animation: float 4s ease-in-out infinite;
         }}
     </style>
     """
 
-def get_particle_js() -> str:
-    return """
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            function createParticle() {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-                
-                const size = Math.random() * 3 + 1;
-                const posX = Math.random() * window.innerWidth;
-                const posY = Math.random() * window.innerHeight;
-                const opacity = Math.random() * 0.5 + 0.1;
-                const color = `rgba(16, 16, 16, ${opacity})`;
-                
-                particle.style.width = `${size}px`;
-                particle.style.height = `${size}px`;
-                particle.style.left = `${posX}px`;
-                particle.style.top = `${posY}px`;
-                particle.style.opacity = opacity;
-                
-                document.body.appendChild(particle);
-                animateParticle(particle);
-            }
+    stars_html = ""
 
-            function animateParticle(particle) {
-                let x = parseFloat(particle.style.left);
-                let y = parseFloat(particle.style.top);
-                const speedX = (Math.random() - 0.5) * 0.5;
-                const speedY = (Math.random() - 0.5) * 0.5;
-                
-                function move() {
-                    x += speedX;
-                    y += speedY;
-                    
-                    if (x < 0 || x > window.innerWidth || y < 0 || y > window.innerHeight) {
-                        x = Math.random() * window.innerWidth;
-                        y = Math.random() * window.innerHeight;
-                    }
-                    
-                    particle.style.left = `${x}px`;
-                    particle.style.top = `${y}px`;
-                    requestAnimationFrame(move);
-                }
-                
-                move();
-            }
+    # Twinkling stars
+    for _ in range(30):
+        top = random.uniform(0, 100)
+        left = random.uniform(0, 100)
+        delay = random.uniform(0, 3)
+        duration = random.uniform(2, 4)
+        size = random.uniform(2, 5)
+        stars_html += f'''
+        <div class="star" style="
+            top: {top}%;
+            left: {left}%;
+            animation-delay: {delay}s;
+            animation-duration: {duration}s;
+            width: {size}px;
+            height: {size}px;
+        "></div>
+        '''
 
-            for (let i = 0; i < 30; i++) {
-                createParticle();
-            }
-        });
-    </script>
-    """
+    # Cosmic dust
+    for _ in range(20):
+        top = random.uniform(0, 100)
+        left = random.uniform(0, 100)
+        size = random.uniform(1, 3)
+        delay = random.uniform(0, 4)
+        stars_html += f'''
+        <div class="cosmic-dust" style="
+            top: {top}%;
+            left: {left}%;
+            width: {size}px;
+            height: {size}px;
+            animation-delay: {delay}s;
+        "></div>
+        '''
+
+    # Shooting stars from random directions
+    directions = [
+        "shooting-star-left-to-right",
+        "shooting-star-right-to-left",
+        "shooting-star-top-to-bottom",
+        "shooting-star-bottom-to-top"
+    ]
+
+    for _ in range(4):
+        direction = random.choice(directions)
+        top = random.uniform(-20, 100)
+        left = random.uniform(-20, 100)
+        delay = random.uniform(0, 6)
+        duration = random.uniform(2, 4)
+        stars_html += f'''
+        <div class="shooting-star" style="
+            top: {top}%;
+            left: {left}%;
+            animation-name: {direction};
+            animation-delay: {delay}s;
+            animation-duration: {duration}s;
+        "></div>
+        '''
+
+    return css, stars_html

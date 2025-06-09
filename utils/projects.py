@@ -4,6 +4,8 @@ from openai import AsyncOpenAI  # Changed to async
 from dotenv import load_dotenv
 from logger import get_logger
 
+from models.muse import Oracle
+
 # Create a logger
 logger = get_logger(__name__)
 
@@ -13,7 +15,7 @@ load_dotenv()
 # Connect to OpenAI API
 client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))  # Async client
 
-async def get_project_response(fact_info, user_paragraph):  # Added async
+async def get_project_response(oracle_day: Oracle, user_paragraph):  # Added async
     """
     Given a fact_info dictionary and a user's paragraph,
     use OpenAI to generate three real-world environmental or sustainability-related
@@ -21,19 +23,16 @@ async def get_project_response(fact_info, user_paragraph):  # Added async
     """
     logger.debug("get_project_response called")
     
-    if not isinstance(fact_info, dict):
-        logger.error("fact_info is not a dictionary")
+    if not isinstance(oracle_day, Oracle):
+        logger.error("No Oracle has been assigned today")
         return {"projects": []}
-
-    muse = fact_info.get('muse', 'unknown muse')
-    question = fact_info.get('question_asked', 'unknown question')
     
     prompt = f"""
     Based on this user reflection:
     \"\"\"{user_paragraph}\"\"\"
 
-    And inspired by {muse} and the question:
-    \"\"\"{question}\"\"\"
+    And inspired by {oracle_day.muse_name} and the question:
+    \"\"\"{oracle_day.question_asked}\"\"\"
 
     Find 3 real, specific projects that connect these ideas to sustainability efforts.
     Each project must:

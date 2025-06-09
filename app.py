@@ -1,11 +1,12 @@
 import os
 import asyncio
+import base64
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from nicegui import ui
 from config.db import close_db_pool, init_db_pool
 from logger import get_logger
-import uvicorn
+from observatory import observatory
 
 logger = get_logger(__name__)
 
@@ -74,8 +75,27 @@ def main():
     """Main landing page with terminal-style animation."""
     ui.add_head_html('''
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=swap');
+        .logo-container {
+            position: fixed;
+            top: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            z-index: 1000;
+        }
         
+        .logo-img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+    </style>
+    ''')
+    ui.add_head_html('''
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=swap');
+                             
         body {
             margin: 0;
             padding: 0;
@@ -102,6 +122,7 @@ def main():
             justify-content: center;
             transition: all 0.4s ease-in-out;
             clip-path: inset(0% 0% 0% 0%);
+            z-index: 10;
         }
         
         .screen-container.tv-close {
@@ -117,19 +138,28 @@ def main():
             top: 0; left: 0; width: 100%; height: 100%;
             z-index: -1;
         }
+        .centered-container {
+            height: 100vh;                    /* Full viewport height */
+            display: flex;
+            align-items: center;             /* Vertical centering */
+            justify-content: center;         /* Horizontal centering */
+            flex-direction: column;
+            text-align: center;
+        }                     
         
         .terminal {
             background-color: #000 !important;
-            background: #000 !important;
             border: 1px solid #333;
-            border-radius: 8px;
             padding: 2rem;
-            width: min(400px, 90vw);
+            width: 600px;
             text-align: center;
-            margin-bottom: 2rem;
+            z-index: 100;
+            border-radius: 8px;
             box-shadow: 0 0 20px rgba(0,0,0,0.8);
-        }
-        
+            color: white;
+            font-family: 'Cormorant Garamond', serif;
+        }                 
+
         .init-text {
             font-family: 'Cormorant Garamond', serif;
             font-size: clamp(1.2rem, 4vw, 1.8rem);
@@ -138,47 +168,62 @@ def main():
             position: relative;
         }
         
-        .init-text::after {
-            content: '|';
-            color: white;
-            position: absolute;
-            right: -10px;
-            animation: blink 0.75s step-end infinite;
-        }
-        
         @keyframes blink {
             from, to { opacity: 0; }
             50% { opacity: 1; }
         }
-        
+                
         .dots {
+            position: relative;
+            color: white;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(1.2rem, 4vw, 1.8rem);
             display: inline-block;
-            width: 30px;
-            text-align: left;
         }
-        
+
         .dots span {
             opacity: 0;
-            animation: dot-appear 0.5s forwards;
+            transition: opacity 0.5s ease;
         }
-        
+
         .dots span:nth-child(1) { animation-delay: 0.5s; }
         .dots span:nth-child(2) { animation-delay: 1s; }
         .dots span:nth-child(3) { animation-delay: 1.5s; }
-        
-        @keyframes dot-appear {
+
+        .dots::after {
+            content: '|';
+            position: absolute;
+            margin-left: 2px;
+            animation: blink 0.75s step-end infinite;
+            color: white;
+        }
+
+        .loading-completed {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(1.2rem, 4vw, 1.8rem);
+            color: white;
+            display: inline-block;
+            position: relative;
+            opacity: 0;
+            animation: fade-in 0.5s ease-in forwards;
+            animation-delay: 2s; /* Appears after all dots finish */
+        }
+
+        @keyframes fade-in {
+            from { opacity: 0; }
             to { opacity: 1; }
         }
-        
+                
         .telescope {
+            opacity: 1 !important;
             font-size: clamp(2rem, 8vw, 4rem);
-            margin-top: 2rem;
+            margin-top: 1rem;
             animation: float 3s ease-in-out infinite;
         }
         
         @keyframes float {
             0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
+            50% { transform: translateY(0); }
         }
         
         .prompt {
@@ -187,10 +232,7 @@ def main():
             font-family: 'Cormorant Garamond', serif;
             font-weight: 600;
             text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-            margin-top: 1rem;
-            opacity: 0;
-            animation: fade-in 0.5s forwards;
-            animation-delay: 2s;
+            margin-top: 1.5rem;
             cursor: pointer;
         }
         
@@ -208,26 +250,44 @@ def main():
     </style>
     ''')
 
+    # Logo and header
+    with open("static/logo.png", "rb") as img_file:
+        logo_base64 = base64.b64encode(img_file.read()).decode()
+        ui.html(f'''
+        <div class="logo-container">
+            <a href="https://cocoex.xyz" target="_blank">
+                <img src="data:image/png;base64,{logo_base64}" class="logo-img">
+            </a>
+        </div>
+        ''')
+
     # Create screen container that will animate
     screen = ui.element('div').classes('screen-container')
-    
     # Create noise background
     with screen:
         ui.element('div').classes('noise')
-    
-    # Terminal with solid black background
-    with ui.element('div').classes('terminal'):
-        with ui.element('div').classes('init-text'):
-            ui.html('init observatory')
-            with ui.element('span').classes('dots'):
-                ui.html('<span>.</span><span>.</span><span>.</span>')
-        
-        # Prompt line
-        prompt = ui.label("press enter...").classes('prompt')
-    
-    # Telescope emoji
-    ui.html('<div class="telescope">🔭</div>')
+    with ui.column().classes('centered-container'):
+        with ui.element('div').classes('terminal'):
+            status = ui.html('init observatory |').classes('init-text')
+        prompt = ui.label("Press Enter.").classes('prompt').style('opacity: 0')
+        ui.html('<div class="telescope">🔭</div>')
 
+    async def animate_loading():
+        await asyncio.sleep(0.4)
+        status.set_content('init observatory. ')
+        await asyncio.sleep(0.4)
+        status.set_content('init observatory.. |')
+        await asyncio.sleep(0.4)
+        status.set_content('init observatory...')
+        await asyncio.sleep(0.4)
+        status.set_content('init observatory... |')
+        await asyncio.sleep(0.4)
+        status.set_content('loading completed.')
+        await asyncio.sleep(0.2)
+        prompt.style('opacity: 1')
+
+    ui.timer(0.5, animate_loading, once=True)  # ✅ Properly scheduled
+    
     # Handle TV closing effect
     def tv_close_and_go():
         """Animate transition to observatory page."""
@@ -239,20 +299,16 @@ def main():
     prompt.on('click', tv_close_and_go)
     ui.keyboard(on_key=lambda e: tv_close_and_go() if e.key.enter else None)
 
-# Fallback observatory page (in case the import fails)
-@ui.page('/observatory')
-def observatory_fallback():
-    """Fallback observatory page."""
-    ui.label('🔭 Observatory Loading...').classes('text-2xl text-white')
-    ui.label('The observatory module is being initialized.').classes('text-white')
-
 def configure_nicegui():
     """Configure NiceGUI settings."""
     # Set page title and favicon
+    ui.add_head_html('''
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔭</text></svg>">
+    ''')
     ui.run_with(
         app,
         title="Muse Observatory",
-        favicon="🔭"
+        favicon="static/favicon.png"
     )
 
 if __name__ == "__main__":
@@ -260,12 +316,14 @@ if __name__ == "__main__":
     host = os.getenv("HOST", "0.0.0.0")
     port = int(os.getenv("PORT", "8080"))
     debug = os.getenv("DEBUG", "false").lower() == "true"
-    
+
     logger.info(f"🚀 Looking at the stars orbiting in the cosmos! 🔭")
     logger.info(f"📡 Server starting on {host}:{port}")
-    
+
     if debug:
         logger.info("🐛 Debug mode enabled")
     
     # Configure and run NiceGUI with FastAPI
     configure_nicegui()
+    # 🧠 ADD THIS to actually start the server:
+    ui.run(host=host, port=port, reload=debug)
