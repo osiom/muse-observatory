@@ -7,7 +7,7 @@ from psycopg2.extras import RealDictCursor
 from nicegui import ui
 
 from config.db import get_db_connection, return_db_connection
-from config.styles import get_cosmic_css
+from config.observatory_css import get_logo_css, get_cosmic_css, get_text_css
 from models.muse import Oracle
 from utils.media import get_base64_comet
 from logger import get_logger
@@ -18,189 +18,25 @@ logger = get_logger(__name__)
 
 def apply_styles(color: str, support_color: str, astro_color: str):
     """Integrated styles combining styles.py with terminal effects and cosmic enhancements"""
-    ui.add_head_html('''
-    <style>
-        .logo-container {
-            position: fixed;
-            top: 20px;
-            left: 0;
-            right: 0;
-            display: flex;
-            justify-content: center;
-            z-index: 1000;
-        }
-        
-        .logo-img {
-            width: 60px;
-            height: 60px;
-            object-fit: contain;
-        }
-    </style>
-    ''')    
+    logo_css = get_logo_css()
+    ui.add_head_html(logo_css)
+
     # 1. Base cosmic styles from styles.py
-    css, stars = get_cosmic_css(color, support_color, astro_color)
-    ui.add_head_html(css)
+    cosmic_css, stars = get_cosmic_css(color, support_color, astro_color)
+    ui.add_head_html(cosmic_css)
     ui.add_body_html(stars)
-
-    ui.add_head_html(f'''
-    <style>
-        .main-container {{
-            width: 100%;
-            max-width: 900px;  /* Adjust as needed */
-            margin: 0 auto;
-            padding: 2rem;
-            text-align: center; /* Center text content */
-        }}
-
-        /* Text styles */
-        .muse-title {{
-            font-size: 52px;
-            font-weight: bold;
-            text-align: center;
-            margin: 0;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-        }}
-
-        .muse-subtitle {{
-            font-size: 24px;
-            text-align: center;
-            margin: 0;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-        }}
-
-        .fun-fact {{
-            font-size: 22px;
-            font-style: normal;
-            text-align: center;
-            line-height: 1.6;
-            margin: 0;
-            max-width: 800px;
-            text-shadow: 0 2px 2px rgba(0,0,0,0.3);
-        }}
-
-        /* Input section */
-        .input-section {{
-            width: 100%;
-            max-width: 800px;
-            margin: 2rem 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }}
-
-        /* Form elements */
-        .clean-input {{
-            width: 65% !important;
-            min-height: 100px !important;
-            margin: 0 auto !important;
-            font-size: 16px !important;
-            background: white !important;
-            color: black !important;
-            border: 2px solid {color} !important;
-            border-radius: 12px !important;
-            padding: 16px !important;
-            font-family: 'Cormorant Garamond' !important;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }}
-
-        .clean-input::placeholder {{
-            color: #666 !important;
-            font-style: italic;
-            opacity: 1 !important;
-        }}
-
-        /* Buttons */
-        .muse-button {{
-            background-color: {color} !important;
-            color: white !important;
-            font-size: 16px !important;
-            padding: 12px 36px !important;
-            border: none !important;
-            border-radius: 8px !important;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin: 0 auto;
-        }}
-
-        .muse-button:hover {{
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
-        }}
-
-        /* Dialog styles */
-        .dialog-button {{
-            background-color: transparent !important;
-            color: {color} !important;
-            font-size: 16px !important;
-            padding: 8px 24px !important;
-            border: 3px solid {color} !important;
-            border-radius: 24px !important;
-            cursor: pointer;
-            transition: all 0.3s;
-        }}
-
-        .dialog-button:hover {{
-            background-color: {color} !important;
-            color: white !important;
-        }}
-
-        .muse-title,
-        .muse-subtitle,
-        .fun-fact,
-        .question-text,
-        .source-link {{
-            text-align: center !important;
-            margin-left: auto;
-            margin-right: auto;
-        }}
-
-        /* Question text */
-        .question-text {{
-            font-size: 20px;
-            font-style: normal;
-            text-align: center;
-            line-height: 1.6;
-            max-width: 800px;
-            color: white;
-            text-shadow: 0 2px 2px rgba(0,0,0,0.3);
-        }}
-
-        /* Input container */
-        .input-container {{
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 0 auto;
-        }}
-
-        /* Prompt text */
-        .write-prompt {{
-            text-align: center;
-            color: white;
-            font-style: italic;
-            margin: 12px;
-            font-size: 18px;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
-        }}
-
-        /* Button container */
-        .button-container {{
-            display: flex;
-            justify-content: center;
-            width: 100%;
-            margin: 10px;
-        }}
-    </style>
-    ''')
-
+    text_style = get_text_css(color)
+    ui.add_head_html(text_style)
+    
     # 3. Terminal text animation (new)
     ui.add_head_html(f'''
     <style>
         /* Simplified terminal text typing effect */
         .terminal-question {{
-            display: inline-block;
-            white-space: pre;
+            display: block;
+            white-space: pre-wrap;    /* Preserves line breaks, allows wrapping */
+            word-wrap: break-word;    /* Ensures long words wrap if needed */
+            max-width: 100%;          /* Ensures it doesn't overflow its parent */
         }}
     </style>
 
@@ -506,7 +342,7 @@ def observatory():
                 ''')
                         
             # Text elements with center alignment
-            ui.label("Today's Muse").classes("muse-subtitle")
+            ui.label("Today's Muse").classes("muse-subtitle").style('margin-top: 7px')
             ui.label(oracle_day.muse_name.upper()).classes("muse-title text-center")
             ui.label(f"for {oracle_day.social_cause}").classes("muse-subtitle text-center")
             
@@ -515,7 +351,8 @@ def observatory():
             ui.link("Source", oracle_day.fact_check_link).classes("source-link text-center")
             
             # Question and input
-            ui.label(oracle_day.question_asked).classes("question-text terminal-question text-center")
+            with ui.column().classes("question-container"):
+                ui.label(oracle_day.question_asked).classes("question-text terminal-question text-center")
             
             with ui.column().classes("input-container w-full mx-auto"):
                 user_input = ui.textarea(placeholder="Share your inspiration...") \

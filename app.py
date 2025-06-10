@@ -273,17 +273,17 @@ def main():
         ui.html('<div class="telescope">🔭</div>')
 
     async def animate_loading():
-        await asyncio.sleep(0.4)
+        await asyncio.sleep(0.6)
         status.set_content('init observatory. ')
-        await asyncio.sleep(0.4)
+        await asyncio.sleep(0.6)
         status.set_content('init observatory.. |')
-        await asyncio.sleep(0.4)
+        await asyncio.sleep(0.6)
         status.set_content('init observatory...')
-        await asyncio.sleep(0.4)
+        await asyncio.sleep(0.6)
         status.set_content('init observatory... |')
-        await asyncio.sleep(0.4)
+        await asyncio.sleep(0.6)
         status.set_content('loading completed.')
-        await asyncio.sleep(0.2)
+        await asyncio.sleep(0.7)
         prompt.style('opacity: 1')
 
     ui.timer(0.5, animate_loading, once=True)  # ✅ Properly scheduled
@@ -301,7 +301,6 @@ def main():
 
 def configure_nicegui():
     """Configure NiceGUI settings."""
-    # Set page title and favicon
     ui.add_head_html('''
         <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔭</text></svg>">
     ''')
@@ -322,8 +321,13 @@ if __name__ == "__main__":
 
     if debug:
         logger.info("🐛 Debug mode enabled")
-    
-    # Configure and run NiceGUI with FastAPI
+
     configure_nicegui()
     # 🧠 ADD THIS to actually start the server:
-    ui.run(host=host, port=port, reload=debug)
+    ui.run(
+        host=host,
+        port=port,
+        reload=debug,
+        title="Muse Observatory",
+        favicon="🔭"
+    )
