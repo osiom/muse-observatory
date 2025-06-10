@@ -1,4 +1,5 @@
 import os
+import re
 import json
 from openai import AsyncOpenAI  # Changed to async
 from dotenv import load_dotenv
@@ -13,7 +14,7 @@ logger = get_logger(__name__)
 load_dotenv()
 
 # Connect to OpenAI API
-client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))  # Async client
+client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"), timeout=60)  # Async client
 
 async def get_project_response(oracle_day: Oracle, user_paragraph):  # Added async
     """
@@ -41,7 +42,7 @@ async def get_project_response(oracle_day: Oracle, user_paragraph):  # Added asy
     - Have a working URL
     - Relate to both the user's ideas and the muse's theme
 
-    Return JSON format with:
+    Return only valid JSON, without any Markdown formatting or triple backticks, format with schema:
     {{
         "projects": [
             {{
@@ -57,7 +58,6 @@ async def get_project_response(oracle_day: Oracle, user_paragraph):  # Added asy
     try:
         response = await client.chat.completions.create(  # Added await
             model="gpt-4o",
-            response_format={"type": "json_object"},
             messages=[
                 {
                     "role": "system",
@@ -66,11 +66,17 @@ async def get_project_response(oracle_day: Oracle, user_paragraph):  # Added asy
                 {"role": "user", "content": prompt}
             ]
         )
-        
-        result = json.loads(response.choices[0].message.content)
+        logger.info(f"Received raw response: {response.choices[0].message.content}")
+        raw_content = response.choices[0].message.content
+        cleaned_content = re.sub(r"^```(?:json)?\s*|\s*```$", "", raw_content.strip(), flags=re.MULTILINE)
+
+        result = json.loads(cleaned_content)
         logger.debug(f"Found {len(result.get('projects', []))} projects")
         return result
-
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON decode error: {e}")
+        logger.error(f"Raw response: {response.choices[0].message.content}")
+        return {"projects": []}
     except Exception as e:
         logger.error(f"Error generating projects: {str(e)}")
         return {"projects": []}

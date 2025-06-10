@@ -488,3 +488,113 @@ def get_cosmic_css(muse_color: str, support_color: str, astro_color: str) -> tup
         '''
 
     return css, stars_html
+
+def get_load_cosmic_css(color: str) -> tuple[str, str]:
+    css = f"""
+    <style>
+        @keyframes twinkle {{
+            0% {{ opacity: 0.2; transform: scale(0.5); }}
+            50% {{ opacity: 1; transform: scale(1); }}
+            100% {{ opacity: 0.2; transform: scale(0.5); }}
+        }}
+        @keyframes shooting-star {{
+            0% {{ transform: translateX(-100px) translateY(-100px) rotate(-45deg); opacity: 0; }}
+            10% {{ opacity: 1; }}
+            90% {{ opacity: 1; }}
+            100% {{ transform: translateX(calc(100vw + 100px)) translateY(calc(100vh + 100px)) rotate(-45deg); opacity: 0; }}
+        }}
+        @keyframes float {{
+            0%, 100% {{ transform: translateY(0px); }}
+            50% {{ transform: translateY(-10px); }}
+        }}
+        .cosmic-loader {{
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 9999 !important;
+            pointer-events: none;
+        }}
+        .star {{
+            position: absolute !important;
+            background-color: {color} !important;
+            width: 3px !important;
+            height: 3px !important;
+            border-radius: 50% !important;
+            animation: twinkle 3s infinite ease-in-out !important;
+            box-shadow: 0 0 8px 2px {color} !important;
+            z-index: 10000 !important;
+        }}
+        .shooting-star {{
+            position: absolute !important;
+            width: 60px !important;
+            height: 4px !important;
+            background: linear-gradient(90deg, {color}, transparent) !important;
+            border-radius: 2px !important;
+            animation: shooting-star 2s linear infinite !important;
+            opacity: 0 !important;
+            box-shadow: 0 0 10px {color} !important;
+            z-index: 10000 !important;
+        }}
+        .cosmic-dust {{
+            position: absolute !important;
+            background-color: rgba(255,255,255,0.3) !important;
+            border-radius: 50% !important;
+            animation: float 4s ease-in-out infinite !important;
+            z-index: 10000 !important;
+        }}
+    </style>
+    """
+    stars_html = ""
+    for _ in range(50):
+        top = random.uniform(0, 100)
+        left = random.uniform(0, 100)
+        delay = random.uniform(0, 3)
+        duration = random.uniform(2, 4)
+        size = random.uniform(2, 5)
+        
+        stars_html += f'''
+            <div class="star" style="
+                top: {top}%;
+                left: {left}%;
+                animation-delay: {delay}s;
+                animation-duration: {duration}s;
+                width: {size}px;
+                height: {size}px;
+            "></div>
+        '''
+    
+    # Add cosmic dust particles
+    for _ in range(15):
+        top = random.uniform(0, 100)
+        left = random.uniform(0, 100)
+        size = random.uniform(1, 3)
+        delay = random.uniform(0, 4)
+        
+        stars_html += f'''
+            <div class="cosmic-dust" style="
+                top: {top}%;
+                left: {left}%;
+                width: {size}px;
+                height: {size}px;
+                animation-delay: {delay}s;
+            "></div>
+        '''
+    
+    # Add shooting stars
+    for _ in range(3):
+        top = random.uniform(0, 50)
+        left = random.uniform(-10, 0)
+        delay = random.uniform(0, 6)
+        duration = random.uniform(2, 4)
+        
+        stars_html += f'''
+            <div class="shooting-star" style="
+                top: {top}%;
+                left: {left}%;
+                animation-delay: {delay}s;
+                animation-duration: {duration}s;
+            "></div>
+        '''
+    return css, stars_html

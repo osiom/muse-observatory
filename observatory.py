@@ -7,7 +7,7 @@ from psycopg2.extras import RealDictCursor
 from nicegui import ui
 
 from config.db import get_db_connection, return_db_connection
-from config.observatory_css import get_logo_css, get_cosmic_css, get_text_css
+from config.observatory_css import get_logo_css, get_cosmic_css, get_text_css, get_load_cosmic_css
 from models.muse import Oracle
 from utils.media import get_base64_comet
 from logger import get_logger
@@ -28,58 +28,10 @@ def apply_styles(color: str, support_color: str, astro_color: str):
     text_style = get_text_css(color)
     ui.add_head_html(text_style)
 
-def save_response(fact_info: Dict[str, Any], user_input: str, projects: List[Dict]):
-    """Save both inspiration and projects with connection pooling"""
-    conn = None
-    cursor = None
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        inspiration_id = str(uuid.uuid4())
-        # Save inspiration
-        cursor.execute("""
-            INSERT INTO inspirations 
-            (date, id, day_of_week, social_cause, muse, user_inspiration)
-            VALUES (%s, %s, %s, %s, %s, %s)
-            """, (
-                datetime.now().date(),
-                inspiration_id,
-                datetime.now().strftime('%A'),
-                fact_info['social_cause'],
-                fact_info['muse'],
-                user_input
-            ))
-        
-        # Save projects
-        for project in projects:
-            cursor.execute("""
-                INSERT INTO projects 
-                (id, project_name, organisation, geographical_level, 
-                link_to_organisation, sk_inspiration)
-                VALUES (%s, %s, %s, %s, %s, %s)
-                """, (
-                    str(uuid.uuid4()),
-                    project['project_name'],
-                    project['organization'],
-                    project['geographic_level'],
-                    project['link_to_organization'],
-                    inspiration_id
-                ))
-        
-        conn.commit()
-        
-    except Exception as e:
-        ui.notify(f"Error saving: {str(e)}", type='negative')
-        logger.error(f"Save failed: {str(e)}")
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            return_db_connection(conn)  # Return to pool instead of closing
-
-def show_projects_dialog(projects: List[Dict], muse_name: str, muse_color: str) -> bool:
+async def show_projects_dialog(projects: List[Dict], muse_name: str, muse_color: str) -> bool:
     """Display projects in a dialog with muse-themed styling"""
-    with ui.dialog().classes("w-full max-w-2xl") as dialog, ui.card().classes("w-full p-0 overflow-hidden"):
+    dialog = ui.dialog().classes("w-full max-w-2xl")
+    with dialog, ui.card().classes("w-full p-0 overflow-hidden"):
         ui.html(f'''
             <div style="
                 position: absolute;
@@ -131,135 +83,27 @@ async def handle_share(oracle_day: Oracle, user_input: str, share_button: ui.but
         loader.style("z-index: 9999; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;")
         
         # Loading message with higher z-index than stars
-        with ui.column().classes("relative z-50 bg-black bg-opacity-70 p-8 rounded-xl"):
-            ui.label("Looking through the telescope...").classes("text-3xl font-bold text-white mb-4")
+        with ui.column().classes(f"relative z-50 bg-{oracle_day.astro_color} bg-opacity-70 p-8 rounded-xl"):
+            ui.label("Capting signals... 📡").classes("text-3xl font-bold text-white mb-4")
         
         # Add HTML/CSS for animated cosmic background
-        ui.add_head_html(f'''
-            <style>
-                @keyframes twinkle {{
-                    0% {{ opacity: 0.2; transform: scale(0.5); }}
-                    50% {{ opacity: 1; transform: scale(1); }}
-                    100% {{ opacity: 0.2; transform: scale(0.5); }}
-                }}
-                @keyframes shooting-star {{
-                    0% {{ transform: translateX(-100px) translateY(-100px) rotate(-45deg); opacity: 0; }}
-                    10% {{ opacity: 1; }}
-                    90% {{ opacity: 1; }}
-                    100% {{ transform: translateX(calc(100vw + 100px)) translateY(calc(100vh + 100px)) rotate(-45deg); opacity: 0; }}
-                }}
-                @keyframes float {{
-                    0%, 100% {{ transform: translateY(0px); }}
-                    50% {{ transform: translateY(-10px); }}
-                }}
-                .cosmic-loader {{
-                    position: fixed !important;
-                    top: 0 !important;
-                    left: 0 !important;
-                    width: 100vw !important;
-                    height: 100vh !important;
-                    z-index: 9999 !important;
-                    pointer-events: none;
-                }}
-                .star {{
-                    position: absolute !important;
-                    background-color: {oracle_day.astro_color} !important;
-                    width: 3px !important;
-                    height: 3px !important;
-                    border-radius: 50% !important;
-                    animation: twinkle 3s infinite ease-in-out !important;
-                    box-shadow: 0 0 8px 2px {oracle_day.astro_color} !important;
-                    z-index: 10000 !important;
-                }}
-                .shooting-star {{
-                    position: absolute !important;
-                    width: 60px !important;
-                    height: 4px !important;
-                    background: linear-gradient(90deg, {oracle_day.astro_color}, transparent) !important;
-                    border-radius: 2px !important;
-                    animation: shooting-star 2s linear infinite !important;
-                    opacity: 0 !important;
-                    box-shadow: 0 0 10px {oracle_day.astro_color} !important;
-                    z-index: 10000 !important;
-                }}
-                .cosmic-dust {{
-                    position: absolute !important;
-                    background-color: rgba(255,255,255,0.3) !important;
-                    border-radius: 50% !important;
-                    animation: float 4s ease-in-out infinite !important;
-                    z-index: 10000 !important;
-                }}
-            </style>
-        ''')
+        loader_cosmic_css = get_text_css(oracle_day.color)
+        ui.add_head_html(loader_cosmic_css)
         
         # Container for cosmic elements with proper positioning
         cosmic_container = ui.element('div')
         cosmic_container.classes('cosmic-loader')
-        
-        with cosmic_container:
-            # Generate 50 twinkling stars with fixed positioning
-            stars_html = ""
-            for _ in range(50):
-                top = random.uniform(0, 100)
-                left = random.uniform(0, 100)
-                delay = random.uniform(0, 3)
-                duration = random.uniform(2, 4)
-                size = random.uniform(2, 5)
-                
-                stars_html += f'''
-                    <div class="star" style="
-                        top: {top}%;
-                        left: {left}%;
-                        animation-delay: {delay}s;
-                        animation-duration: {duration}s;
-                        width: {size}px;
-                        height: {size}px;
-                    "></div>
-                '''
-            
-            # Add cosmic dust particles
-            for _ in range(15):
-                top = random.uniform(0, 100)
-                left = random.uniform(0, 100)
-                size = random.uniform(1, 3)
-                delay = random.uniform(0, 4)
-                
-                stars_html += f'''
-                    <div class="cosmic-dust" style="
-                        top: {top}%;
-                        left: {left}%;
-                        width: {size}px;
-                        height: {size}px;
-                        animation-delay: {delay}s;
-                    "></div>
-                '''
-            
-            # Add shooting stars
-            for _ in range(3):
-                top = random.uniform(0, 50)
-                left = random.uniform(-10, 0)
-                delay = random.uniform(0, 6)
-                duration = random.uniform(2, 4)
-                
-                stars_html += f'''
-                    <div class="shooting-star" style="
-                        top: {top}%;
-                        left: {left}%;
-                        animation-delay: {delay}s;
-                        animation-duration: {duration}s;
-                    "></div>
-                '''
-            
-            ui.html(stars_html)
+        cosmic_loader_css, stars = get_load_cosmic_css(oracle_day.color)
+        ui.html(cosmic_loader_css)
+        ui.html(stars)
 
     try:
         # Get project recommendations
         projects_data = await get_project_response(oracle_day, user_input)
-        
         if not projects_data or not projects_data.get('projects'):
             ui.notify("No cosmic connections found today", type='info')
             projects_data = {'projects': []}
-        
+
         # Remove share button
         share_button.delete()
         
@@ -269,10 +113,10 @@ async def handle_share(oracle_day: Oracle, user_input: str, share_button: ui.but
             oracle_day.muse_name,
             oracle_day.color
         )
+        dialog.open()
         await dialog
-        
         # Save to database
-        oracle_day.save_response(user_input, projects_data['projects'])
+        oracle_day.save_inspiration(user_input, projects_data['projects'])
         ui.notify(f"Shared with the {oracle_day.muse_name}!", type='positive')
     except Exception as e:
         ui.notify(f"Sandstorm turbulences!: {str(e)}", type='negative')

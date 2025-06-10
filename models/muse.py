@@ -84,6 +84,7 @@ class Oracle:
         """Fetch today's fact from database"""
         conn = None
         cursor = None
+        logger.info("Fetching today's fact from db")
         try:
             conn = get_db_connection()
             cursor = conn.cursor(cursor_factory=RealDictCursor)
@@ -96,6 +97,7 @@ class Oracle:
                 'question_asked': 'What is the meaning of life?',
                 'fact_check_link': '#'
             }
+            logger.info("Fetch for today's facto completed.")
         except Exception as e:
             logger.error(f"Database error: {e}")
             return {
@@ -115,11 +117,12 @@ class Oracle:
         """Save user inspiration and projects"""
         conn = None
         cursor = None
+        logger.info("Saving inspiration provided by the observer.")
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
             inspiration_id = str(uuid.uuid4())
-            
+            logger.info("Inserting data into database...")
             cursor.execute("""
                 INSERT INTO inspirations 
                 (date, id, day_of_week, social_cause, muse, user_inspiration)
@@ -132,8 +135,10 @@ class Oracle:
                     self.muse_name,
                     user_input
                 ))
-            
+            logger.info("Inserting data into database...")
+            logger.info("Inserting projects into database...")
             for project in projects:
+                logger.info(f"Inserting project: {project['project_name']}")
                 cursor.execute("""
                     INSERT INTO projects 
                     (id, project_name, organisation, geographical_level, 
@@ -147,7 +152,7 @@ class Oracle:
                         project['link_to_organization'],
                         inspiration_id
                     ))
-            
+                logger.info(f"Inserting completed.")
             conn.commit()
         except Exception as e:
             logger.error(f"Save failed: {str(e)}")
