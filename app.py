@@ -268,19 +268,19 @@ def main():
         ui.element('div').classes('noise')
     with ui.column().classes('centered-container'):
         with ui.element('div').classes('terminal'):
-            status = ui.html('init observatory |').classes('init-text')
+            status = ui.html('muse-observatory init |').classes('init-text')
         prompt = ui.label("Press Enter.").classes('prompt').style('opacity: 0')
         ui.html('<div class="telescope">🔭</div>')
 
     async def animate_loading():
         await asyncio.sleep(0.6)
-        status.set_content('init observatory. ')
+        status.set_content('muse-observatory init. ')
         await asyncio.sleep(0.6)
-        status.set_content('init observatory.. |')
+        status.set_content('muse-observatory init.. |')
         await asyncio.sleep(0.6)
-        status.set_content('init observatory...')
+        status.set_content('muse-observatory init...')
         await asyncio.sleep(0.6)
-        status.set_content('init observatory... |')
+        status.set_content('muse-observatory init... |')
         await asyncio.sleep(0.6)
         status.set_content('loading completed.')
         await asyncio.sleep(0.7)
