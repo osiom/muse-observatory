@@ -27,44 +27,6 @@ def apply_styles(color: str, support_color: str, astro_color: str):
     ui.add_body_html(stars)
     text_style = get_text_css(color)
     ui.add_head_html(text_style)
-    
-    # 3. Terminal text animation (new)
-    ui.add_head_html(f'''
-    <style>
-        /* Simplified terminal text typing effect */
-        .terminal-question {{
-            display: block;
-            white-space: pre-wrap;    /* Preserves line breaks, allows wrapping */
-            word-wrap: break-word;    /* Ensures long words wrap if needed */
-            max-width: 100%;          /* Ensures it doesn't overflow its parent */
-        }}
-    </style>
-
-    <script>
-        function typeQuestion(element) {{
-            const text = element.textContent;
-            element.textContent = '';
-
-            let i = 0;
-            const speed = 70;
-
-            function type() {{
-                if (i < text.length) {{
-                    element.textContent += text.charAt(i);
-                    i++;
-                    setTimeout(type, speed);
-                }}
-            }}
-            type();
-        }}
-
-        document.addEventListener('DOMContentLoaded', () => {{
-            setTimeout(() => {{
-                document.querySelectorAll('.terminal-question').forEach(typeQuestion);
-            }}, 500);
-        }});
-    </script>
-    ''')
 
 def save_response(fact_info: Dict[str, Any], user_input: str, projects: List[Dict]):
     """Save both inspiration and projects with connection pooling"""
@@ -351,8 +313,7 @@ def observatory():
             ui.link("Source", oracle_day.fact_check_link).classes("source-link text-center")
             
             # Question and input
-            with ui.column().classes("question-container"):
-                ui.label(oracle_day.question_asked).classes("question-text terminal-question text-center")
+            ui.label(oracle_day.question_asked).classes("question-text text-center")
             
             with ui.column().classes("input-container w-full mx-auto"):
                 user_input = ui.textarea(placeholder="Share your inspiration...") \
