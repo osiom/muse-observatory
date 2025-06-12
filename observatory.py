@@ -1,12 +1,9 @@
-from datetime import datetime
-from typing import Dict, Any, List
-import uuid
-import random
+from typing import Dict, List
+
+import asyncio
 import base64
-from psycopg2.extras import RealDictCursor
 from nicegui import ui
 
-from config.db import get_db_connection, return_db_connection
 from config.observatory_css import get_logo_css, get_cosmic_css, get_text_css, get_load_cosmic_css
 from models.muse import Oracle
 from utils.media import get_base64_comet
@@ -28,9 +25,9 @@ def apply_styles(color: str, support_color: str, astro_color: str):
     text_style = get_text_css(color)
     ui.add_head_html(text_style)
 
-async def show_projects_dialog(projects: List[Dict], muse_name: str, muse_color: str) -> bool:
+def show_projects_dialog(projects: List[Dict], muse_name: str, muse_color: str) -> bool:
     """Display projects in a dialog with muse-themed styling"""
-    dialog = ui.dialog().classes("w-full max-w-2xl")
+    dialog = ui.dialog().classes("w-full max-w-lg")
     with dialog, ui.card().classes("w-full p-0 overflow-hidden"):
         ui.html(f'''
             <div style="
@@ -45,39 +42,42 @@ async def show_projects_dialog(projects: List[Dict], muse_name: str, muse_color:
             "></div>
         ''')
         
-        with ui.column().classes("w-full p-6 gap-4 relative"):
-            # Header with muse reference
+        # Center everything with flex and items-center
+        with ui.column().classes("w-full p-4 gap-3 relative items-center"):
+            # Header with muse reference - already centered
+            ui.html(f'''
+                <div class="text-2xl font-bold text-center text-black" 
+                     style="text-shadow: 0 1px 2px rgba(0,0,0,0.2); line-height: 1.3;">
+                    Guided by inspiration,<br>
+                    <span style="color: {muse_color};">{muse_name}</span> connects you to these projects
+                </div>
+            ''')
             
-            ui.label(f"Guided by inspiration, {muse_name} connects you to these projects").classes(
-                "text-2xl font-bold text-center text-black"  # Changed from text-white to text-black
-            ).style("text-shadow: 0 1px 2px rgba(0,0,0,0.2)")  # Lightened shadow for dark text
+            # Projects list container - center the cards themselves
+            with ui.column().classes("w-full gap-3 items-center"):
+                for project in projects:
+                    with ui.card().classes("w-full p-3 bg-white bg-opacity-90 border-l-4 mx-auto").style(
+                        f"border-left-color: {muse_color}"
+                    ):
+                        # Center all content within each card
+                        with ui.column().classes("gap-2 items-center justify-center text-center w-full"):
+                            ui.label(project['project_name']).classes("text-lg font-semibold text-black")
+                            ui.label(f"by {project['organization']}").classes("text-md text-gray-800")
+                            ui.label(f"Scope: {project['geographic_level']}").classes("text-sm text-gray-600")
+                            # Center the link row
+                            with ui.row().classes("items-center justify-center gap-2"):
+                                ui.icon("link", color="primary")
+                                ui.link("Visit", project['link_to_organization'], new_tab=True).classes("text-primary")
             
-            # Projects list
-            for project in projects:
-                with ui.card().classes("w-full p-4 bg-white bg-opacity-90 border-l-4").style(
-                    f"border-left-color: {muse_color}"
-                ):
-                    with ui.column().classes("gap-2"):
-                        ui.label(project['project_name']).classes("text-lg font-semibold text-black")
-                        ui.label(f"by {project['organization']}").classes("text-md text-gray-800")
-                        ui.label(f"Scope: {project['geographic_level']}").classes("text-sm text-gray-600")
-                        with ui.row().classes("items-center gap-2"):
-                            ui.icon("link", color="primary")
-                            ui.link("Visit", project['link_to_organization'], new_tab=True).classes("text-primary")
-            
-            # Single close button with muse color
+            # Close button - already full width and centered
             ui.button(
                 "Close", 
-                on_click=lambda: dialog.submit(True)
+                on_click=dialog.close
             ).classes("dialog-button w-full mt-4")
     return dialog
 
 async def handle_share(oracle_day: Oracle, user_input: str, share_button: ui.button):
     """Handle the share button click with cosmic starry loader"""
-    if not user_input.strip():
-        ui.notify("Please write something first", type='warning')
-        return
-    
     # Create cosmic loader with transparent background
     with ui.column().classes("fixed inset-0 items-center justify-center bg-black bg-opacity-30") as loader:
         loader.style("z-index: 9999; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;")
@@ -114,7 +114,6 @@ async def handle_share(oracle_day: Oracle, user_input: str, share_button: ui.but
             oracle_day.color
         )
         dialog.open()
-        await dialog
         # Save to database
         oracle_day.save_inspiration(user_input, projects_data['projects'])
         ui.notify(f"Shared with the {oracle_day.muse_name}!", type='positive')
@@ -125,7 +124,7 @@ async def handle_share(oracle_day: Oracle, user_input: str, share_button: ui.but
         loader.delete()
 
 @ui.page('/observatory')
-def observatory():
+def  observatory():
     oracle_day = Oracle()
     apply_styles(oracle_day.color, oracle_day.support_color ,oracle_day.astro_color)
     
@@ -163,7 +162,14 @@ def observatory():
                 user_input = ui.textarea(placeholder="Share your inspiration...") \
                     .classes("clean-input mx-auto")
                 
-                share_button = ui.button(
-                    f"SHARE WITH {oracle_day.muse_name.upper()}",
-                    on_click=lambda: handle_share(oracle_day, user_input.value, share_button)
-                ).classes("muse-button mx-auto")
+            async def on_share_click():
+                if not user_input.value.strip():
+                    ui.notify(f"Please inspire {oracle_day.muse_name}!", type='warning')
+                    return
+                # Call the async handle_share function
+                await handle_share(oracle_day, user_input.value, share_button)
+
+            share_button = ui.button(
+                f"SHARE WITH {oracle_day.muse_name.upper()}",
+                on_click=on_share_click
+            ).classes("muse-button mx-auto")

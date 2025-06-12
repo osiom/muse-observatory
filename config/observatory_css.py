@@ -109,7 +109,9 @@ def get_text_css(color):
                 cursor: pointer;
                 transition: all 0.3s;
             }}
-
+            .notification-container, .notification {{
+                z-index: 999* !important;  /* super high to be on top */
+            }}
             .muse-button:hover {{
                 background-color: {color} !important;
                 color: white !important;
@@ -460,12 +462,12 @@ def get_cosmic_css(muse_color: str, support_color: str, astro_color: str) -> tup
     # More realistic shooting stars with theme colors
     directions = [
         "shooting-star-left-to-right",
-        "shooting-star-right-to-left", 
-        "shooting-star-top-to-bottom",
-        "shooting-star-bottom-to-top"
+        "shooting-star-right-to-left"
+        #"shooting-star-top-to-bottom",
+        #"shooting-star-bottom-to-top"
     ]
 
-    for _ in range(8):
+    for _ in range(3):
         direction = random.choice(directions)
         top = random.uniform(-20, 100)
         left = random.uniform(-20, 100)
