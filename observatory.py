@@ -1,14 +1,15 @@
 from typing import Dict, List
 
-import asyncio
 import base64
 from nicegui import ui
 
+from sidebar import create_sidebar
 from config.observatory_css import get_logo_css, get_cosmic_css, get_text_css, get_load_cosmic_css
 from models.muse import Oracle
 from utils.media import get_base64_comet
-from logger import get_logger
 from utils.projects import get_project_response
+
+from logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -24,6 +25,8 @@ def apply_styles(color: str, support_color: str, astro_color: str):
     ui.add_body_html(stars)
     text_style = get_text_css(color)
     ui.add_head_html(text_style)
+    sidebar = create_sidebar(color, astro_color)
+    sidebar.render()
 
 def show_projects_dialog(projects: List[Dict], muse_name: str, muse_color: str) -> bool:
     """Display projects in a dialog with muse-themed styling"""
