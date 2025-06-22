@@ -20,13 +20,13 @@ CHART = {
     "ares": {
         "color": "#D54D2E",
         "support_color": "#C45C44",
-        "astro_color": "#000000",
+        "astro_color": "#FBFBFB",
         "name": "Ares",
     },
     "rabu": {
         "color": "#8CB07F",
         "support_color": "#BDEDAB",
-        "astro_color": "#000000",
+        "astro_color": "#FBFBFB",
         "name": "Rabu",
     },
     "thunor": {
@@ -50,7 +50,7 @@ CHART = {
     "solis": {
         "color": "#D48348",
         "support_color": "#F2AF7E",
-        "astro_color": "#000000",
+        "astro_color": "#FBFBFB",
         "name": "Solis",
     },
 }
