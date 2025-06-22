@@ -25,8 +25,8 @@ def apply_styles(color: str, support_color: str, astro_color: str):
     ui.add_body_html(stars)
     text_style = get_text_css(color)
     ui.add_head_html(text_style)
-    sidebar = create_sidebar(color, astro_color)
-    sidebar.render()
+    #sidebar = create_sidebar(color, astro_color)
+    #sidebar.render()
 
 def show_projects_dialog(projects: List[Dict], muse_name: str, muse_color: str) -> bool:
     """Display projects in a dialog with muse-themed styling"""
