@@ -1,10 +1,11 @@
+import json
 import os
 import re
-import json
-from openai import AsyncOpenAI  # Changed to async
-from dotenv import load_dotenv
-from logger import get_logger
 
+from dotenv import load_dotenv
+from openai import AsyncOpenAI  # Changed to async
+
+from logger import get_logger
 from models.muse import Oracle
 
 # Create a logger
@@ -16,18 +17,19 @@ load_dotenv()
 # Connect to OpenAI API
 client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"), timeout=60)  # Async client
 
-async def get_project_response(oracle_day: Oracle, user_paragraph):  # Added async
+
+async def get_project_response(oracle_day: Oracle, user_paragraph: str):  # Added async
     """
     Given a fact_info dictionary and a user's paragraph,
     use OpenAI to generate three real-world environmental or sustainability-related
     projects that connect the user's ideas to the natural adaptation of the organism.
     """
     logger.debug("get_project_response called")
-    
+
     if not isinstance(oracle_day, Oracle):
         logger.error("No Oracle has been assigned today")
         return {"projects": []}
-    
+
     prompt = f"""
     Based on this user reflection:
     \"\"\"{user_paragraph}\"\"\"
@@ -47,28 +49,30 @@ async def get_project_response(oracle_day: Oracle, user_paragraph):  # Added asy
         "projects": [
             {{
                 "project_name": "...",
-                "organization": "...", 
+                "organization": "...",
                 "geographic_level": "...",
                 "link_to_organization": "..."
             }}
         ]
     }}
     """
-    
+
     try:
         response = await client.chat.completions.create(  # Added await
             model="gpt-4o",
             messages=[
                 {
                     "role": "system",
-                    "content": "You are an environmental research assistant. Return only real projects in exact JSON format."
+                    "content": "You are an environmental research assistant. Return only real projects in exact JSON format.",
                 },
-                {"role": "user", "content": prompt}
-            ]
+                {"role": "user", "content": prompt},
+            ],
         )
         logger.info(f"Received raw response: {response.choices[0].message.content}")
         raw_content = response.choices[0].message.content
-        cleaned_content = re.sub(r"^```(?:json)?\s*|\s*```$", "", raw_content.strip(), flags=re.MULTILINE)
+        cleaned_content = re.sub(
+            r"^```(?:json)?\s*|\s*```$", "", raw_content.strip(), flags=re.MULTILINE
+        )
 
         result = json.loads(cleaned_content)
         logger.debug(f"Found {len(result.get('projects', []))} projects")

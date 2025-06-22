@@ -35,7 +35,7 @@ services:
           memory: 256M
 
   app:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
       args:
@@ -57,18 +57,18 @@ services:
       - DB_NAME=${DB_NAME:-muse_observatory}
       - DB_USER=${DB_USER:-museuser}
       - DB_PASSWORD=${DB_PASSWORD:-musepassword}
-      
+
       # Application configuration
       - HOST=0.0.0.0
       - PORT=8080
       - ENVIRONMENT=${ENVIRONMENT:-production}
       - DEBUG=${DEBUG:-false}
-      
+
       # Python configuration
       - PYTHONUNBUFFERED=1
       - PYTHONDONTWRITEBYTECODE=1
       - PYTHONPATH=/app
-      
+
       # Logging
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
     networks:

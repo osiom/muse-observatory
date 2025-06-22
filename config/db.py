@@ -1,6 +1,8 @@
 import os
-from psycopg2 import pool
+
 from dotenv import load_dotenv
+from psycopg2 import pool
+
 from logger import get_logger
 
 logger = get_logger(__name__)
@@ -16,27 +18,27 @@ DB_CONFIG = {
     "port": os.getenv("DB_PORT", "5432"),
 }
 
+
 def init_db_pool():
     global connection_pool
     try:
-        connection_pool = pool.SimpleConnectionPool(
-            minconn=1,
-            maxconn=10,
-            **DB_CONFIG
-        )
+        connection_pool = pool.SimpleConnectionPool(minconn=1, maxconn=10, **DB_CONFIG)
         logger.info("Database connection pool initialized")
     except Exception as e:
         logger.error(f"Error initializing connection pool: {e}")
         raise
+
 
 def get_db_connection():
     if not connection_pool:
         init_db_pool()
     return connection_pool.getconn()
 
-def return_db_connection(conn):
+
+def return_db_connection(conn: str):
     if connection_pool:
         connection_pool.putconn(conn)
+
 
 def close_db_pool():
     if connection_pool:

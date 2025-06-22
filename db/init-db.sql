@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS daily_facts (
     color VARCHAR(20) NOT NULL,
     note VARCHAR(5) NOT NULL,
     social_cause VARCHAR(50) NOT NULL,
-    animal_subject VARCHAR(100) NOT NULL,
+    kingdoms_life_subject VARCHAR(100) NOT NULL,
     fun_fact TEXT NOT NULL,
     question_asked TEXT NOT NULL,
     fact_check_link TEXT NOT NULL,

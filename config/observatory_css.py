@@ -1,13 +1,15 @@
 import random
 
-def get_opposite_color(hex_color):
+
+def get_opposite_color(hex_color: str):
     """Get complementary color by inverting RGB"""
-    hex_color = hex_color.lstrip('#')
+    hex_color = hex_color.lstrip("#")
     r, g, b = int(hex_color[0:2], 16), int(hex_color[2:4], 16), int(hex_color[4:6], 16)
     return f"#{255-r:02x}{255-g:02x}{255-b:02x}"
 
+
 def get_logo_css():
-    css = f"""
+    css = """
     <style>
         .logo-container {{
             position: fixed;
@@ -18,7 +20,7 @@ def get_logo_css():
             justify-content: center;
             z-index: 1000;
         }}
-        
+
         .logo-img {{
             width: 60px;
             height: 60px;
@@ -28,7 +30,8 @@ def get_logo_css():
     """
     return css
 
-def get_text_css(color):
+
+def get_text_css(color: str):
     css = f"""
     <style>
             .main-container {{
@@ -165,7 +168,7 @@ def get_text_css(color):
                 width: 100%;               /* ensures it respects parent width */
                 box-sizing: border-box;   /* includes padding in width */
                 margin: 0 auto;           /* centers it */
-                padding: 0 1rem;                       
+                padding: 0 1rem;
                 font-style: normal;
                 text-align: center;
                 line-height: 1.6;
@@ -203,13 +206,16 @@ def get_text_css(color):
         """
     return css
 
-def get_cosmic_css(muse_color: str, support_color: str, astro_color: str) -> tuple[str, str]:
+
+def get_cosmic_css(
+    muse_color: str, support_color: str, astro_color: str
+) -> tuple[str, str]:
     css = f"""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=swap');
-        
+
         body {{
-            background: 
+            background:
                 /* Primary gradient using muse and astro colors */
                 radial-gradient(ellipse at 30% 20%, {muse_color}40 0%, transparent 50%),
                 radial-gradient(ellipse at 70% 80%, {astro_color}35 0%, transparent 60%),
@@ -257,24 +263,24 @@ def get_cosmic_css(muse_color: str, support_color: str, astro_color: str) -> tup
             left: 0;
             width: 100%;
             height: 100%;
-            background: 
+            background:
                 /* Cosmic dust with color tints */
-                repeating-linear-gradient(45deg, 
-                    transparent 0px, 
-                    {muse_color}02 0.5px, 
-                    rgba(255,255,255,0.008) 1px, 
-                    transparent 2px, 
+                repeating-linear-gradient(45deg,
+                    transparent 0px,
+                    {muse_color}02 0.5px,
+                    rgba(255,255,255,0.008) 1px,
+                    transparent 2px,
                     transparent 100px),
-                repeating-linear-gradient(-45deg, 
-                    transparent 0px, 
+                repeating-linear-gradient(-45deg,
+                    transparent 0px,
                     {astro_color}02 0.5px,
-                    rgba(255,255,255,0.006) 1px, 
-                    transparent 2px, 
+                    rgba(255,255,255,0.006) 1px,
+                    transparent 2px,
                     transparent 150px),
-                repeating-linear-gradient(135deg, 
-                    transparent 0px, 
-                    {muse_color}01 1px, 
-                    transparent 2px, 
+                repeating-linear-gradient(135deg,
+                    transparent 0px,
+                    {muse_color}01 1px,
+                    transparent 2px,
                     transparent 200px);
             opacity: 0.7;
             z-index: -1;
@@ -394,29 +400,31 @@ def get_cosmic_css(muse_color: str, support_color: str, astro_color: str) -> tup
 
     # Mixed star types for realistic variety
     star_types = [
-        {'class': 'star distant', 'weight': 0.6},
-        {'class': 'star bright', 'weight': 0.15},
-        {'class': 'star colored', 'weight': 0.2},
-        {'class': 'pulsar', 'weight': 0.05}
+        {"class": "star distant", "weight": 0.6},
+        {"class": "star bright", "weight": 0.15},
+        {"class": "star colored", "weight": 0.2},
+        {"class": "pulsar", "weight": 0.05},
     ]
 
     # Create more varied stars
     for _ in range(120):
-        star_type = random.choices(star_types, weights=[t['weight'] for t in star_types])[0]
+        star_type = random.choices(
+            star_types, weights=[t["weight"] for t in star_types]
+        )[0]
         top = random.uniform(0, 100)
         left = random.uniform(0, 100)
         delay = random.uniform(0, 4)
         duration = random.uniform(3, 8)
-        
-        if 'pulsar' in star_type['class']:
+
+        if "pulsar" in star_type["class"]:
             size = random.uniform(2, 4)
             duration = random.uniform(1.5, 3)
-        elif 'bright' in star_type['class']:
+        elif "bright" in star_type["class"]:
             size = random.uniform(2, 6)
         else:
             size = random.uniform(0.5, 3)
-            
-        stars_html += f'''
+
+        stars_html += f"""
         <div class="{star_type['class']}" style="
             top: {top}%;
             left: {left}%;
@@ -425,7 +433,7 @@ def get_cosmic_css(muse_color: str, support_color: str, astro_color: str) -> tup
             width: {size}px;
             height: {size}px;
         "></div>
-        '''
+        """
 
     # Enhanced nebula particles with more muse/astro color influence
     for _ in range(50):
@@ -433,7 +441,7 @@ def get_cosmic_css(muse_color: str, support_color: str, astro_color: str) -> tup
         left = random.uniform(0, 100)
         size = random.uniform(10, 30)
         delay = random.uniform(0, 20)
-        stars_html += f'''
+        stars_html += f"""
         <div class="nebula-particle" style="
             top: {top}%;
             left: {left}%;
@@ -441,7 +449,7 @@ def get_cosmic_css(muse_color: str, support_color: str, astro_color: str) -> tup
             height: {size}px;
             animation-delay: {delay}s;
         "></div>
-        '''
+        """
 
     # Enhanced cosmic dust
     for _ in range(80):
@@ -449,7 +457,7 @@ def get_cosmic_css(muse_color: str, support_color: str, astro_color: str) -> tup
         left = random.uniform(0, 100)
         size = random.uniform(0.5, 2)
         delay = random.uniform(0, 6)
-        stars_html += f'''
+        stars_html += f"""
         <div class="cosmic-dust" style="
             top: {top}%;
             left: {left}%;
@@ -457,14 +465,14 @@ def get_cosmic_css(muse_color: str, support_color: str, astro_color: str) -> tup
             height: {size}px;
             animation-delay: {delay}s;
         "></div>
-        '''
+        """
 
     # More realistic shooting stars with theme colors
     directions = [
         "shooting-star-left-to-right",
         "shooting-star-right-to-left"
-        #"shooting-star-top-to-bottom",
-        #"shooting-star-bottom-to-top"
+        # "shooting-star-top-to-bottom",
+        # "shooting-star-bottom-to-top"
     ]
 
     for _ in range(3):
@@ -475,8 +483,8 @@ def get_cosmic_css(muse_color: str, support_color: str, astro_color: str) -> tup
         duration = random.uniform(1.5, 3.5)
         width = random.uniform(40, 80)
         height = random.uniform(1, 3)
-        
-        stars_html += f'''
+
+        stars_html += f"""
         <div class="shooting-star" style="
             top: {top}%;
             left: {left}%;
@@ -487,9 +495,10 @@ def get_cosmic_css(muse_color: str, support_color: str, astro_color: str) -> tup
             animation-duration: {duration}s;
             animation-iteration-count: infinite;
         "></div>
-        '''
+        """
 
     return css, stars_html
+
 
 def get_load_cosmic_css(color: str) -> tuple[str, str]:
     css = f"""
@@ -555,8 +564,8 @@ def get_load_cosmic_css(color: str) -> tuple[str, str]:
         delay = random.uniform(0, 3)
         duration = random.uniform(2, 4)
         size = random.uniform(2, 5)
-        
-        stars_html += f'''
+
+        stars_html += f"""
             <div class="star" style="
                 top: {top}%;
                 left: {left}%;
@@ -565,16 +574,16 @@ def get_load_cosmic_css(color: str) -> tuple[str, str]:
                 width: {size}px;
                 height: {size}px;
             "></div>
-        '''
-    
+        """
+
     # Add cosmic dust particles
     for _ in range(15):
         top = random.uniform(0, 100)
         left = random.uniform(0, 100)
         size = random.uniform(1, 3)
         delay = random.uniform(0, 4)
-        
-        stars_html += f'''
+
+        stars_html += f"""
             <div class="cosmic-dust" style="
                 top: {top}%;
                 left: {left}%;
@@ -582,21 +591,21 @@ def get_load_cosmic_css(color: str) -> tuple[str, str]:
                 height: {size}px;
                 animation-delay: {delay}s;
             "></div>
-        '''
-    
+        """
+
     # Add shooting stars
     for _ in range(3):
         top = random.uniform(0, 50)
         left = random.uniform(-10, 0)
         delay = random.uniform(0, 6)
         duration = random.uniform(2, 4)
-        
-        stars_html += f'''
+
+        stars_html += f"""
             <div class="shooting-star" style="
                 top: {top}%;
                 left: {left}%;
                 animation-delay: {delay}s;
                 animation-duration: {duration}s;
             "></div>
-        '''
+        """
     return css, stars_html

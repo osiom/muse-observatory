@@ -1,0 +1,34 @@
+repos:
+  # Base hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace   # Trim trailing whitespace
+      - id: end-of-file-fixer     # Ensure files end with newline
+      - id: check-yaml            # Validate YAML files
+      - id: check-added-large-files  # Block files >500KB
+      - id: detect-private-key     # Prevent accidental key commits
+
+  # Formatters
+  - repo: https://github.com/psf/black
+    rev: 23.12.1
+    hooks:
+      - id: black
+        args: [--line-length=88, --safe]
+
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: ["--profile", "black"]
+
+  # Linters
+  - repo: https://github.com/PyCQA/flake8
+    rev: 6.1.0
+    hooks:
+      - id: flake8
+        additional_dependencies:
+          - flake8-bugbear==23.12.2
+          - flake8-comprehensions==3.14.0
+          - flake8-annotations==3.0.1
+        args: [--ignore=ANN201 ANN204 E501 F841 F401 ]

@@ -1,0 +1,19 @@
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+
+[tool.isort]
+profile = "black"
+line_length = 88
+known_first_party = ["your_package_name"]  # Replace with your project name
+
+[tool.mypy]
+strict = true
+ignore_missing_imports = true
+disallow_untyped_defs = true
+warn_return_any = true
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "W503"]  # Array format
+exclude = ".git,__pycache__,venv"
