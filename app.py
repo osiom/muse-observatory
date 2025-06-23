@@ -4,8 +4,10 @@ import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from nicegui import app as nicegui_app
 from nicegui import ui
-from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
@@ -42,22 +44,14 @@ async def lifespan(app: FastAPI):
         logger.error(f"❌ Error during shutdown: {e}")
 
 
-# Create FastAPI app with lifespan events
-app = FastAPI(
-    title="Muse Observatory",
-    description="A celestial observation platform",
-    version="1.0.0",
-    lifespan=lifespan,
-)
-
 # --- Rate Limiting Setup ---
-app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+nicegui_app.state.limiter = limiter
+nicegui_app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # --- End Rate Limiting Setup ---
 
 
 # Health check endpoint
-@app.get("/api/health")
+@nicegui_app.get("/api/health")
 @limiter.limit("10/minute")
 async def health_check(request: Request):
     """Health check endpoint for monitoring."""
@@ -65,7 +59,7 @@ async def health_check(request: Request):
 
 
 # Additional API endpoints
-@app.get("/api/info", response_model=AppInfoResponse)
+@nicegui_app.get("/api/info", response_model=AppInfoResponse)
 @limiter.limit("10/minute")
 async def app_info(request: Request):
     """Get application information."""
@@ -74,6 +68,35 @@ async def app_info(request: Request):
         description="Looking at the stars in the universe",
         environment=os.getenv("ENVIRONMENT", "production"),
     )
+
+
+@nicegui_app.get("/api/stats")
+async def get_rate_limit_stats():
+    logger.info("📊 Starting to gather rate limit stats from temporary storage...")
+    storage = nicegui_app.state.limiter._storage
+    stats = {}
+
+    for key, value in storage.storage.items():
+        logger.debug(f"🔑 Key: {key} | 🔢 Value: {value}")
+        try:
+            count = int(value)
+        except Exception:
+            logger.warning(
+                f"⚠️ Failed to convert value to int for key: {key} | value: {value}"
+            )
+            continue
+
+        if key.startswith("LIMITER/"):
+            parts = key.split("/")
+            if len(parts) >= 3:
+                ip = parts[1]
+                stats[ip] = stats.get(ip, 0) + count
+                logger.debug(f"🖥️ Count updated for IP {ip}: {stats[ip]}")
+
+    logger.info(
+        f"✅ Completed gathering stats: {len(stats)} IPs found with rate limiting data"
+    )
+    return JSONResponse(content=stats)
 
 
 # Main landing page
@@ -320,7 +343,7 @@ def configure_nicegui():
         <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔭</text></svg>">
     """
     )
-    ui.run_with(app, title="Muse Observatory", favicon="🔭")
+    ui.run_with(nicegui_app, title="Muse Observatory", favicon="🔭")
 
 
 if __name__ == "__main__":
