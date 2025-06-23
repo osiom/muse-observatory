@@ -77,7 +77,7 @@ class HelpButton:
                             The Observatory is a growing map of creativity and shared discovery. Your thoughts become part of this living collection.
                         </p>
                         <p style="margin-bottom: 1rem;">
-                            Together, these form the <strong>stardust</strong> for future collaborations — a shared resource of ideas within cocoex.
+                            Together, these form the <strong>comets</strong> for future collaborations — a shared resource of ideas within cocoex.
                         </p>
 
                         <p style="margin-bottom: 1rem; font-style: italic; color: rgba(255,255,255,0.7);">
