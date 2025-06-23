@@ -270,6 +270,3 @@ def observatory(request: Request):
     </style>
     """
     )
-
-    # Optionally, you can add per-user or per-IP rate limiting to actions here if you expose any API endpoints from this file in the future.
-    # For now, main API endpoints are protected in app.py.
