@@ -40,7 +40,7 @@ Muse Observatory is a stargazer’s tool, designed to help you explore the const
 3. Visit [http://localhost:8080](http://localhost:8080) and begin your cosmic journey.
 
 ## 🌙 About cocoex
-cocoex aims to cultivate a vibrant COMMUNITY where ART and IMPACTFUL change coexist in harmonious synergy. We want to bring artists, creators and collectors together to support and inspire one another to create a sense of unity and shared purpose.
+[cocoex](http://cocoex.xyz)  aims to cultivate a vibrant COMMUNITY where ART and IMPACTFUL change coexist in harmonious synergy. We want to bring artists, creators and collectors together to support and inspire one another to create a sense of unity and shared purpose.
 
 ## 🛡️ Privacy & Data Policy
 Muse Observatory does not collect personal data beyond what is necessary for its core features. Any user input or project inspiration is stored securely and used only to enhance the collaborative experience. No data is sold or shared with third parties. For questions or data removal requests, contact osiom.
