@@ -121,6 +121,7 @@ class HelpButton:
                 "height: auto; "
                 "cursor: pointer; "
                 "transition: opacity 0.3s ease;"
+                "z-index: 9999 !important; "
             )
         )
 
