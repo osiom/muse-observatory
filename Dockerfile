@@ -12,8 +12,18 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+# Set timezone as root
 ENV TZ=Europe/Berlin
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+# Create a non-root user and group
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+
+# Set permissions for /app
+RUN chown -R appuser:appgroup /app
+
+# Switch to non-root user
+USER appuser
 
 ENV PYTHONUNBUFFERED=1 \
     NICEGUI_HOST=0.0.0.0 \

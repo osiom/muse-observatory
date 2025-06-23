@@ -49,3 +49,19 @@ CREATE TABLE IF NOT EXISTS projects (
 -- Add indexes for lookups
 CREATE INDEX IF NOT EXISTS idx_project_id ON projects(id);
 CREATE INDEX IF NOT EXISTS idx_project_sk_inspiration ON projects(sk_inspiration);
+
+-- Track daily OpenAI token usage for quota enforcement
+CREATE TABLE IF NOT EXISTS openai_token_usage (
+    usage_date DATE PRIMARY KEY,
+    tokens_used BIGINT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS openai_usage_log (
+    id SERIAL PRIMARY KEY,
+    timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    endpoint VARCHAR(100),
+    tokens_used BIGINT,
+    model VARCHAR(50),
+    status VARCHAR(20),
+    error TEXT
+);

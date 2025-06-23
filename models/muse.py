@@ -6,6 +6,7 @@ from psycopg2.extras import RealDictCursor
 
 from config.db import get_db_connection, return_db_connection
 from logger import get_logger
+from models.schemas import InspirationModel, ProjectModel
 
 logger = get_logger(__name__)
 
@@ -58,48 +59,55 @@ CHART = {
 
 class Oracle:
     def __init__(self: "Oracle"):
-        logger.info("Initiating the Oracle of the day")
+        logger.info(
+            "🌌 Initiating the Oracle of the day — tuning into the cosmic frequencies..."
+        )
         fact = Oracle.get_todays_fact()
 
-        logger.info("Understanding to which Muse are we connected today")
+        logger.info("✨ Seeking which Muse is guiding us through the universe today...")
         self.daily_muse = fact.get("muse", "cocoex")
-        logger.info(f"Muse of the day: {self.daily_muse}")
+        logger.info(f"🌠 Muse of the day: {self.daily_muse}")
         self.social_cause = fact.get("social_cause", "Unknown")
-        logger.info(f"for: {self.social_cause}")
+        logger.info(f"🌍 Social cause in focus: {self.social_cause}")
         self.fun_fact = fact.get("fun_fact", "No fact today.")
         self.question_asked = fact.get("question_asked", "No question asked.")
         self.fact_check_link = fact.get("fact_check_link", "#")
 
-        self.color = CHART.get(self.daily_muse.lower(), {}).get("color", "#FFFFFF")
-        self.support_color = CHART.get(self.daily_muse.lower(), {}).get(
-            "support_color", "#FFFFFF"
+        muse_chart = CHART.get(self.daily_muse.lower(), {})
+        self.color = muse_chart.get("color", "#FFFFFF")
+        self.support_color = muse_chart.get("support_color", "#FFFFFF")
+        self.astro_color = muse_chart.get("astro_color", "#FFFFFF")
+        self.muse_name = muse_chart.get("name")
+        logger.info(
+            f"🎨 Muse colors: {self.color}, {self.support_color}, {self.astro_color}"
         )
-        self.astro_color = CHART.get(self.daily_muse.lower(), {}).get(
-            "astro_color", "#FFFFFF"
-        )
-        self.muse_name = CHART.get(self.daily_muse.lower(), {}).get("name")
 
     @staticmethod
     def get_todays_fact() -> Dict[str, Any]:
-        """Fetch today's fact from database"""
+        """Fetch today's fact from the cosmic database"""
         conn = None
         cursor = None
-        logger.info("Fetching today's fact from db")
+        logger.info("🔮 Fetching today's fact from the cosmic archives...")
         try:
             conn = get_db_connection()
             cursor = conn.cursor(cursor_factory=RealDictCursor)
             today = datetime.now().strftime("%Y-%m-%d")
             cursor.execute("SELECT * FROM daily_facts WHERE date = %s", (today,))
-            return cursor.fetchone() or {
-                "muse": "cocoex",
-                "social_cause": "cocoex",
-                "fun_fact": "The oracle didnt answer today!",
-                "question_asked": "What is the meaning of life?",
-                "fact_check_link": "#",
-            }
-            logger.info("Fetch for today's facto completed.")
+            fact = cursor.fetchone()
+            if fact:
+                logger.info("🌟 Fact found for today — the universe speaks!")
+                return fact
+            else:
+                logger.warning("🌑 No fact found for today — the stars are silent.")
+                return {
+                    "muse": "cocoex",
+                    "social_cause": "cocoex",
+                    "fun_fact": "The oracle didn't answer today!",
+                    "question_asked": "What is the meaning of life?",
+                    "fact_check_link": "#",
+                }
         except Exception as e:
-            logger.error(f"Database error: {e}")
+            logger.error(f"☄️ Database error in the cosmic archives: {e}")
             return {
                 "muse": "cocoex",
                 "social_cause": "Database Error",
@@ -113,16 +121,23 @@ class Oracle:
             if conn:
                 return_db_connection(conn)
 
-    def save_inspiration(self: "Oracle", user_input: str, projects: List[Dict]):
-        """Save user inspiration and projects"""
+    def save_inspiration(self: "Oracle", user_input: str, projects: List[dict]):
+        """Save user inspiration and projects to the cosmic ledger"""
+        # Validate input using Pydantic
+        inspiration = InspirationModel(
+            user_input=user_input,
+            projects=[ProjectModel(**p) for p in projects],
+        )
         conn = None
         cursor = None
-        logger.info("Saving inspiration provided by the observer.")
+        logger.info(
+            f"📝 Saving inspiration from the observer to the cosmic ledger for muse {self.muse_name}..."
+        )
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
             inspiration_id = str(uuid.uuid4())
-            logger.info("Inserting data into database...")
+            logger.info("🌌 Inserting inspiration into the database...")
             cursor.execute(
                 """
                 INSERT INTO inspirations
@@ -135,13 +150,14 @@ class Oracle:
                     datetime.now().strftime("%A"),
                     self.social_cause,
                     self.muse_name,
-                    user_input,
+                    inspiration.user_input,
                 ),
             )
-            logger.info("Inserting data into database...")
-            logger.info("Inserting projects into database...")
-            for project in projects:
-                logger.info(f"Inserting project: {project['project_name']}")
+            logger.info("🌠 Inserting related projects into the cosmic registry...")
+            for project in inspiration.projects:
+                logger.info(
+                    f"🚀 Inserting project: {project.project_name} (by {project.organization})"
+                )
                 cursor.execute(
                     """
                     INSERT INTO projects
@@ -151,17 +167,19 @@ class Oracle:
                     """,
                     (
                         str(uuid.uuid4()),
-                        project["project_name"],
-                        project["organization"],
-                        project["geographic_level"],
-                        project["link_to_organization"],
+                        project.project_name,
+                        project.organization,
+                        project.geographic_level,
+                        project.link_to_organization,
                         inspiration_id,
                     ),
                 )
-                logger.info("Inserting completed.")
             conn.commit()
+            logger.info(
+                f"🌌 Inspiration and projects for muse {self.muse_name} have been committed to the universe!"
+            )
         except Exception as e:
-            logger.error(f"Save failed: {str(e)}")
+            logger.error(f"💥 Save failed in the cosmic ledger: {str(e)}")
             raise
         finally:
             if cursor:

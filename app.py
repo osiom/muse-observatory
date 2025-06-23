@@ -3,11 +3,15 @@ import base64
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from nicegui import ui
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 from config.db import close_db_pool, init_db_pool
 from logger import get_logger
+from models.schemas import AppInfoResponse
 from observatory import observatory
 
 logger = get_logger(__name__)
@@ -45,23 +49,31 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# --- Rate Limiting Setup ---
+limiter = Limiter(key_func=get_remote_address, default_limits=["30/hour"])
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+# --- End Rate Limiting Setup ---
+
 
 # Health check endpoint
 @app.get("/api/health")
-async def health_check():
+@limiter.limit("10/minute")
+async def health_check(request: Request):
     """Health check endpoint for monitoring."""
     return {"status": "healthy", "service": "muse-observatory", "version": "1.0.0"}
 
 
 # Additional API endpoints
-@app.get("/api/info")
-async def app_info():
+@app.get("/api/info", response_model=AppInfoResponse)
+@limiter.limit("10/minute")
+async def app_info(request: Request):
     """Get application information."""
-    return {
-        "name": "Muse Observatory",
-        "description": "Looking at the stars in the universe",
-        "environment": os.getenv("ENVIRONMENT", "production"),
-    }
+    return AppInfoResponse(
+        name="Muse Observatory",
+        description="Looking at the stars in the universe",
+        environment=os.getenv("ENVIRONMENT", "production"),
+    )
 
 
 # Main landing page
