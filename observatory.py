@@ -3,12 +3,7 @@ from typing import Dict, List
 
 from nicegui import ui
 
-from config.observatory_css import (
-    get_cosmic_css,
-    get_load_cosmic_css,
-    get_logo_css,
-    get_text_css,
-)
+from config.observatory_css import get_cosmic_css, get_load_cosmic_css, get_text_css
 from logger import get_logger
 from models.helper import create_help_button
 from models.muse import Oracle
@@ -19,9 +14,6 @@ logger = get_logger(__name__)
 
 def apply_styles(color: str, support_color: str, astro_color: str):
     """Integrated styles combining styles.py with terminal effects and cosmic enhancements"""
-    logo_css = get_logo_css()
-    ui.add_head_html(logo_css)
-
     # 1. Base cosmic styles from styles.py
     cosmic_css, stars = get_cosmic_css(color, support_color, astro_color)
     ui.add_head_html(cosmic_css)

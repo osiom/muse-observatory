@@ -8,29 +8,6 @@ def get_opposite_color(hex_color: str):
     return f"#{255-r:02x}{255-g:02x}{255-b:02x}"
 
 
-def get_logo_css():
-    css = """
-    <style>
-        .logo-container {{
-            position: fixed;
-            top: 20px;
-            left: 0;
-            right: 0;
-            display: flex;
-            justify-content: center;
-            z-index: 1000;
-        }}
-
-        .logo-img {{
-            width: 60px;
-            height: 60px;
-            object-fit: contain;
-        }}
-    </style>
-    """
-    return css
-
-
 def get_text_css(color: str):
     css = f"""
     <style>
