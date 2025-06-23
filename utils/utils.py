@@ -9,8 +9,10 @@ def validate_project_input(user_input: str) -> str | None:
     if len(user_input) == 0 or len(user_input) > 500:
         return None
 
-    # Allow only letters, numbers, spaces, dash and underscore
-    if not re.fullmatch(r"[A-Za-z0-9 _-]+", user_input):
+    # Allow letters, numbers, spaces, dash, underscore, and common punctuation (!?.:,;@#%&*()[]{}<>/\\'\"|~`^$)
+    if not re.fullmatch(
+        r"[A-Za-z0-9 _\-!\?\.:,;@#%&*()\[\]{}<>/\\'\"|~`^$]+", user_input
+    ):
         return None
 
     return user_input
