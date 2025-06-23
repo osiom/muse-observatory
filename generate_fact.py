@@ -6,8 +6,8 @@ import psycopg2
 from dotenv import load_dotenv
 from openai import OpenAI
 
-from logger import get_logger
 from models.schemas import FunFactModel
+from utils.logger import get_logger
 
 logger = get_logger(__name__)
 # Load environment variables

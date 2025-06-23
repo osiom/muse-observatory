@@ -5,11 +5,12 @@ from fastapi import Request
 from nicegui import ui
 from slowapi.util import get_remote_address
 
-from config.observatory_css import get_cosmic_css, get_load_cosmic_css, get_text_css
-from logger import get_logger
+from css.observatory_css import get_cosmic_css, get_load_cosmic_css, get_text_css
 from models.helper import create_help_button
 from models.muse import Oracle
+from utils.logger import get_logger
 from utils.projects import get_project_response
+from utils.utils import validate_project_input
 
 logger = get_logger(__name__)
 
@@ -228,11 +229,13 @@ def observatory():
                 )
 
             async def on_share_click():
-                if not user_input.value.strip():
+                validated_input = validate_project_input(user_input.value.strip())
+                if validated_input is None:
+                    logger.info("User input validation failed.")
                     ui.notify(f"Please inspire {oracle_day.muse_name}!", type="warning")
                     return
                 # Call the async handle_share function
-                await handle_share(oracle_day, user_input.value, share_button)
+                await handle_share(oracle_day, validated_input, share_button)
 
             share_button = ui.button(
                 f"SHARE WITH {oracle_day.muse_name.upper()}", on_click=on_share_click

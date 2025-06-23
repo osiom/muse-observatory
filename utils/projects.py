@@ -6,9 +6,9 @@ from datetime import datetime
 from dotenv import load_dotenv
 from openai import AsyncOpenAI  # Changed to async
 
-from config.db import get_db_connection, return_db_connection
-from logger import get_logger
+from db.db import get_db_connection, return_db_connection
 from models.muse import Oracle
+from utils.logger import get_logger
 
 # Create a logger
 logger = get_logger(__name__)

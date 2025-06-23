@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 from psycopg2 import pool
 
-from logger import get_logger
+from utils.logger import get_logger
 
 logger = get_logger(__name__)
 load_dotenv()
