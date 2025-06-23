@@ -50,6 +50,19 @@ CREATE TABLE IF NOT EXISTS projects (
 CREATE INDEX IF NOT EXISTS idx_project_id ON projects(id);
 CREATE INDEX IF NOT EXISTS idx_project_sk_inspiration ON projects(sk_inspiration);
 
+-- Final table for cleaned project
+CREATE TABLE IF NOT EXISTS cleaned_projects (
+    id VARCHAR(50) PRIMARY KEY,
+    project_name VARCHAR(250),
+    organisation VARCHAR(250),
+    geographical_level VARCHAR(50),
+    link_to_organisation VARCHAR(250),
+    project_source VARCHAR(15) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_cleaned_project_id ON projects(id);
+
 -- Track daily OpenAI token usage for quota enforcement
 CREATE TABLE IF NOT EXISTS openai_token_usage (
     usage_date DATE PRIMARY KEY,
