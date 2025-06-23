@@ -81,7 +81,7 @@ class HelpButton:
                         </p>
 
                         <p style="margin-bottom: 1rem; font-style: italic; color: rgba(255,255,255,0.7);">
-                            <small>☁️ A self-hosted experience — no clouds in our cosmo :)</small>
+                            ☁️ A self-hosted experience — no clouds in our cosmo :)
                         </p>
                     </div>
                 """
