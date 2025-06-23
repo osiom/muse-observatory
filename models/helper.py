@@ -37,13 +37,13 @@ class HelpButton:
                 ui.html(
                     """
                     <div style="
-                        line-height: 1.3;
+                        line-height: 0.9;
                         color: rgba(255,255,255,0.9);
                         text-align: justify;
-                        font-size: 1.1rem;
-                        margin-top: 0.5rem;
+                        font-size: 1rem;
+                        margin-top: 0.2rem;
                     ">
-                        <h4 style="color: white; font-size: 1.3rem; font-weight: normal; margin: 0.25rem 0 0.75rem 0;">
+                        <h4 style="color: white; font-size: 1.3rem; font-weight: normal; margin: 0.25rem 0 0.25rem 0;">
                             Welcome to the Muse Observatory!
                         </h4>
                         <p style="margin-bottom: 1rem;">
@@ -81,7 +81,7 @@ class HelpButton:
                         </p>
 
                         <p style="margin-bottom: 1rem; font-style: italic; color: rgba(255,255,255,0.7);">
-                            ☁️ A self-hosted experience — no clouds in our cosmo :)
+                            ☁️ A self-hosted experience — no clouds in our cosmo :) 
                         </p>
                     </div>
                 """
