@@ -1,6 +1,7 @@
 import base64
 from typing import Dict, List
 
+from fastapi import Request
 from nicegui import ui
 
 from css.observatory_css import get_cosmic_css, get_load_cosmic_css, get_text_css
@@ -165,7 +166,7 @@ async def handle_share(oracle_day: Oracle, user_input: str, share_button: ui.but
 
 @ui.page("/observatory")
 @limiter.limit("1/hour")
-def observatory():
+def observatory(request: Request):
     logger.info("🛰️ Rendering the Observatory page — aligning the cosmic interface...")
     oracle_day = Oracle()
     apply_styles(oracle_day.color, oracle_day.support_color, oracle_day.astro_color)
