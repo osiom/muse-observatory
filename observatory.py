@@ -1,15 +1,13 @@
 import base64
 from typing import Dict, List
 
-from fastapi import Request
 from nicegui import ui
-from slowapi.util import get_remote_address
 
 from css.observatory_css import get_cosmic_css, get_load_cosmic_css, get_text_css
 from models.helper import create_help_button
 from models.muse import Oracle
+from utils.generate_projects import get_project_response
 from utils.logger import get_logger
-from utils.projects import get_project_response
 from utils.utils import validate_project_input
 
 logger = get_logger(__name__)
@@ -182,7 +180,7 @@ def observatory():
         with ui.column().classes("w-full text-center").style("padding-top: 20px;"):
             # Logo and headers - centered alignment
             with ui.row().classes("w-full justify-center mb-4"):
-                with open("static/logo.png", "rb") as img_file:
+                with open("img/logo.png", "rb") as img_file:
                     logo_base64 = base64.b64encode(img_file.read()).decode()
                     ui.html(
                         f"""

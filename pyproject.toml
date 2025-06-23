@@ -5,7 +5,7 @@ target-version = ["py310"]
 [tool.isort]
 profile = "black"
 line_length = 88
-known_first_party = ["your_package_name"]  # Replace with your project name
+known_first_party = ["muse-observatory"]  # Replace with your project name
 
 [tool.mypy]
 strict = true

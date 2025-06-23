@@ -262,7 +262,7 @@ def main():
     )
 
     # Logo and header
-    with open("static/logo.png", "rb") as img_file:
+    with open("img/logo.png", "rb") as img_file:
         logo_base64 = base64.b64encode(img_file.read()).decode()
         ui.html(
             f"""
@@ -320,7 +320,7 @@ def configure_nicegui():
         <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔭</text></svg>">
     """
     )
-    ui.run_with(app, title="Muse Observatory", favicon="static/favicon.png")
+    ui.run_with(app, title="Muse Observatory", favicon="🔭")
 
 
 if __name__ == "__main__":
