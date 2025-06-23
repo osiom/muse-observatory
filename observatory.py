@@ -7,6 +7,7 @@ from css.observatory_css import get_cosmic_css, get_load_cosmic_css, get_text_cs
 from models.helper import create_help_button
 from models.muse import Oracle
 from utils.generate_projects import get_project_response
+from utils.limiter import limiter
 from utils.logger import get_logger
 from utils.utils import validate_project_input
 
