@@ -163,6 +163,7 @@ async def handle_share(oracle_day: Oracle, user_input: str, share_button: ui.but
 
 
 @ui.page("/observatory")
+@limiter.limit("1/hour")
 def observatory():
     logger.info("🛰️ Rendering the Observatory page — aligning the cosmic interface...")
     oracle_day = Oracle()
