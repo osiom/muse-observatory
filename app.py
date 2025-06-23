@@ -359,5 +359,5 @@ if __name__ == "__main__":
         logger.info("🐛 Debug mode enabled")
 
     configure_nicegui()
-    # 🧠 ADD THIS to actually start the server:
+    # 🧠 Actually start the server:
     ui.run(host=host, port=port, reload=debug, title="Muse Observatory", favicon="🔭")
