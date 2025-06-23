@@ -1,7 +1,9 @@
 import base64
 from typing import Dict, List
 
+from fastapi import Request
 from nicegui import ui
+from slowapi.util import get_remote_address
 
 from config.observatory_css import get_cosmic_css, get_load_cosmic_css, get_text_css
 from logger import get_logger
@@ -11,9 +13,14 @@ from utils.projects import get_project_response
 
 logger = get_logger(__name__)
 
+logger.info("🪐 Observatory module loaded — ready to chart the cosmic canvas!")
+
 
 def apply_styles(color: str, support_color: str, astro_color: str):
     """Integrated styles combining styles.py with terminal effects and cosmic enhancements"""
+    logger.info(
+        f"🌈 Applying cosmic styles: primary={color}, support={support_color}, astro={astro_color}"
+    )
     # 1. Base cosmic styles from styles.py
     cosmic_css, stars = get_cosmic_css(color, support_color, astro_color)
     ui.add_head_html(cosmic_css)
@@ -24,6 +31,9 @@ def apply_styles(color: str, support_color: str, astro_color: str):
 
 def show_projects_dialog(projects: List[Dict], muse_name: str, muse_color: str) -> bool:
     """Display projects in a dialog with muse-themed styling"""
+    logger.info(
+        f"🌌 Opening projects dialog for muse '{muse_name}' with {len(projects)} cosmic projects."
+    )
     dialog = ui.dialog().classes("w-full max-w-lg")
     with dialog, ui.card().classes("w-full p-0 overflow-hidden"):
         ui.html(
@@ -57,6 +67,9 @@ def show_projects_dialog(projects: List[Dict], muse_name: str, muse_color: str) 
             # Projects list container - center the cards themselves
             with ui.column().classes("w-full gap-3 items-center"):
                 for project in projects:
+                    logger.info(
+                        f"🚀 Displaying project: {project['project_name']} (by {project['organization']})"
+                    )
                     with ui.card().classes(
                         "w-full p-3 bg-white bg-opacity-90 border-l-4 mx-auto"
                     ).style(f"border-left-color: {muse_color}"):
@@ -91,6 +104,9 @@ def show_projects_dialog(projects: List[Dict], muse_name: str, muse_color: str) 
 
 async def handle_share(oracle_day: Oracle, user_input: str, share_button: ui.button):
     """Handle the share button click with cosmic starry loader"""
+    logger.info(
+        f"✨ User is sharing inspiration with muse '{oracle_day.muse_name}'. Input: '{user_input[:60]}...'"
+    )
     # Create cosmic loader with transparent background
     with ui.column().classes(
         "fixed inset-0 items-center justify-center bg-black bg-opacity-30"
@@ -120,31 +136,36 @@ async def handle_share(oracle_day: Oracle, user_input: str, share_button: ui.but
 
     try:
         # Get project recommendations
+        logger.info("🔭 Querying cosmic engine for project recommendations...")
         projects_data = await get_project_response(oracle_day, user_input)
         if not projects_data or not projects_data.get("projects"):
+            logger.warning("🌑 No cosmic connections found for this inspiration.")
             ui.notify("No cosmic connections found today", type="info")
             projects_data = {"projects": []}
-
+        else:
+            logger.info(f"🌠 {len(projects_data['projects'])} cosmic projects found!")
         # Remove share button
         share_button.delete()
-
         # Show projects dialog
         dialog = show_projects_dialog(
             projects_data["projects"], oracle_day.muse_name, oracle_day.color
         )
         dialog.open()
         # Save to database
+        logger.info("📝 Saving inspiration and cosmic projects to the ledger...")
         oracle_day.save_inspiration(user_input, projects_data["projects"])
+        logger.info(f"🌌 Inspiration shared with the {oracle_day.muse_name}!")
         ui.notify(f"Shared with the {oracle_day.muse_name}!", type="positive")
     except Exception as e:
+        logger.error(f"☄️ Sandstorm turbulence during share: {str(e)}")
         ui.notify(f"Sandstorm turbulences!: {str(e)}", type="negative")
-        logger.error(f"Share error: {str(e)}")
     finally:
         loader.delete()
 
 
 @ui.page("/observatory")
 def observatory():
+    logger.info("🛰️ Rendering the Observatory page — aligning the cosmic interface...")
     oracle_day = Oracle()
     apply_styles(oracle_day.color, oracle_day.support_color, oracle_day.astro_color)
 
@@ -199,8 +220,11 @@ def observatory():
             with ui.column().classes("input-container w-full mx-auto max-w-2xl"):
                 user_input = (
                     ui.textarea(placeholder="Share your inspiration...")
-                    .classes("clean-input mx-auto w-full")
-                    .style("margin-bottom: 20px;")
+                    .classes(
+                        "w-full text-base rounded-2xl border border-white/30 bg-white/70 backdrop-blur-sm "
+                        "shadow-[0_6px_18px_rgba(0,0,0,0.20)] transition-all focus:ring-2 focus:ring-purple-400 focus:ring-offset-2"
+                    )
+                    .style("padding: 1rem; resize: vertical;")
                 )
 
             async def on_share_click():
@@ -242,3 +266,6 @@ def observatory():
     </style>
     """
     )
+
+    # Optionally, you can add per-user or per-IP rate limiting to actions here if you expose any API endpoints from this file in the future.
+    # For now, main API endpoints are protected in app.py.

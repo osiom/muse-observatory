@@ -41,3 +41,17 @@ Muse Observatory is a stargazer’s tool, designed to help you explore the const
 
 ## 🌙 About cocoex
 cocoex aims to cultivate a vibrant COMMUNITY where ART and IMPACTFUL change coexist in harmonious synergy. We want to bring artists, creators and collectors together to support and inspire one another to create a sense of unity and shared purpose.
+
+## 🛡️ Privacy & Data Policy
+Muse Observatory does not collect personal data beyond what is necessary for its core features. Any user input or project inspiration is stored securely and used only to enhance the collaborative experience. No data is sold or shared with third parties. For questions or data removal requests, contact osiom.
+
+## ⚖️ License
+This project is licensed under the MIT License. See the LICENSE file for details.
+
+Copyright (c) 2025 osiom
+
+## 📜 Legal Notice
+Muse Observatory is provided "as is" without warranty of any kind. By using this software, you agree to use it responsibly and in accordance with all applicable laws. The maintainers and owner (osiom) are not liable for any damages or losses resulting from use of this project.
+
+## 🤝 Contributing
+Contributions are welcome! Please open issues or pull requests to help improve the project.

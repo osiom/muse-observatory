@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 from logger import get_logger
+from models.schemas import FunFactModel
 
 logger = get_logger(__name__)
 # Load environment variables
@@ -114,7 +115,7 @@ def check_fact_exists(date: datetime):
             conn.close()
 
 
-def generate_fun_fact(day_info: str, used_kingdom_life: str):
+def generate_fun_fact(day_info: dict, used_kingdom_life: list) -> FunFactModel:
     """Generate a fun fact using OpenAI API"""
     prompt = f"""Generate a fascinating and scientifically accurate fun fact about an organism in the natural world that relates to {day_info['cause']}.
 
@@ -158,20 +159,20 @@ def generate_fun_fact(day_info: str, used_kingdom_life: str):
                 {"role": "user", "content": prompt},
             ],
         )
-
-        # Extract the JSON response
         result_text = response.choices[0].message.content
         result = json.loads(result_text)
-        return result
+        logger.info(
+            f"🌌 [OpenAI] Fun fact generated for muse '{day_info['muse']}' | Prompt length: {len(prompt)} | Response chars: {len(result_text)}"
+        )
+        return FunFactModel(**result)
     except Exception as e:
-        logger.error(f"Error generating response: {e}")
-        # Fallback response if API fails
-        return {
-            "kingdoms_life_subject": "Default organism",
-            "fun_fact": "Due to technical issues, today's fact couldn't be generated. Please check back tomorrow for a new inspiration from nature.",
-            "question_asked": "nd",
-            "fact_check_link": "nd",
-        }
+        logger.error(f"☄️ [OpenAI] Error generating fun fact: {e}")
+        return FunFactModel(
+            kingdoms_life_subject="Default organism",
+            fun_fact="Due to technical issues, today's fact couldn't be generated. Please check back tomorrow for a new inspiration from nature.",
+            question_asked="nd",
+            fact_check_link="nd",
+        )
 
 
 def get_used_kingdom_life(muse: str):
@@ -205,11 +206,13 @@ def get_used_kingdom_life(muse: str):
         return []
 
 
-def store_fun_fact(date: datetime, day_info: str, fact_info: dict):
+def store_fun_fact(date: datetime, day_info: dict, fact_info: FunFactModel):
     """Store the generated fun fact in the database"""
     conn = get_db_connection()
     cursor = conn.cursor()
-
+    logger.info(
+        f"📝 [DB] Storing fun fact for muse '{day_info['muse']}' on {date.strftime('%Y-%m-%d')}"
+    )
     # Check if we already have a fact for today
     cursor.execute(
         "SELECT id FROM daily_facts WHERE date = %s", (date.strftime("%Y-%m-%d"),)
@@ -238,48 +241,39 @@ def store_fun_fact(date: datetime, day_info: str, fact_info: dict):
             day_info["color"],
             day_info["note"],
             day_info["cause"],
-            fact_info["kingdoms_life_subject"],
-            fact_info["fun_fact"],
-            fact_info["question_asked"],
-            fact_info["fact_check_link"],
+            fact_info.kingdoms_life_subject,
+            fact_info.fun_fact,
+            fact_info.question_asked,
+            fact_info.fact_check_link,
         ),
     )
 
     conn.commit()
+    logger.info(f"🌠 [DB] Fun fact for muse '{day_info['muse']}' successfully stored!")
     cursor.close()
     conn.close()
 
 
 def main():
     """Main function to generate and store daily fun fact"""
-    # Get current date
     current_date = datetime.now()
-
-    # Check if fact already exists for today
     if check_fact_exists(current_date):
         logger.info(
-            f"Fact for {current_date.strftime('%Y-%m-%d')} already exists. Exiting."
+            f"🌑 [DB] Fact for {current_date.strftime('%Y-%m-%d')} already exists. Exiting."
         )
         return
-
-    # Get the muse info for today
     day_info = get_muse_for_today()
     used_kingdom_life = get_used_kingdom_life(day_info["muse"])
-
-    # Generate fun fact
     logger.info(
-        f"Generating fun fact for {day_info['muse']} ({day_info['cause']}) avoiding {used_kingdom_life} - ..."
+        f"✨ [OpenAI] Generating fun fact for muse '{day_info['muse']}' ({day_info['cause']}) avoiding {used_kingdom_life} ..."
     )
     fact_info = generate_fun_fact(day_info, used_kingdom_life)
-
-    # Store in database
     store_fun_fact(current_date, day_info, fact_info)
-
     logger.info(
-        f"Successfully generated and stored fun fact about {fact_info['kingdoms_life_subject']}"
+        f"🌌 [OpenAI] Successfully generated and stored fun fact about {fact_info.kingdoms_life_subject}"
     )
-    logger.info(f"Fun fact: {fact_info['fun_fact']}")
-    logger.info(f"and question asked: {fact_info['question_asked']}")
+    logger.info(f"🌟 [OpenAI] Fun fact: {fact_info.fun_fact}")
+    logger.info(f"❓ [OpenAI] and question asked: {fact_info.question_asked}")
 
 
 if __name__ == "__main__":
