@@ -1,12 +1,14 @@
 import base64
 from typing import Dict, List
 
+from fastapi import Request
 from nicegui import ui
 
 from css.observatory_css import get_cosmic_css, get_load_cosmic_css, get_text_css
 from models.helper import create_help_button
 from models.muse import Oracle
 from utils.generate_projects import get_project_response
+from utils.limiter import limiter
 from utils.logger import get_logger
 from utils.utils import validate_project_input
 
@@ -153,8 +155,8 @@ async def handle_share(oracle_day: Oracle, user_input: str, share_button: ui.but
         # Save to database
         logger.info("📝 Saving inspiration and cosmic projects to the ledger...")
         oracle_day.save_inspiration(user_input, projects_data["projects"])
-        logger.info(f"🌌 Inspiration shared with the {oracle_day.muse_name}!")
-        ui.notify(f"Shared with the {oracle_day.muse_name}!", type="positive")
+        logger.info(f"🌌 Inspiration shared with {oracle_day.muse_name}!")
+        ui.notify(f"Shared with {oracle_day.muse_name}!", type="positive")
     except Exception as e:
         logger.error(f"☄️ Sandstorm turbulence during share: {str(e)}")
         ui.notify(f"Sandstorm turbulences!: {str(e)}", type="negative")
@@ -164,7 +166,7 @@ async def handle_share(oracle_day: Oracle, user_input: str, share_button: ui.but
 
 @ui.page("/observatory")
 @limiter.limit("1/hour")
-def observatory():
+def observatory(request: Request):
     logger.info("🛰️ Rendering the Observatory page — aligning the cosmic interface...")
     oracle_day = Oracle()
     apply_styles(oracle_day.color, oracle_day.support_color, oracle_day.astro_color)

@@ -12,6 +12,7 @@ from slowapi.util import get_remote_address
 from db.db import close_db_pool, init_db_pool
 from models.schemas import AppInfoResponse
 from observatory import observatory
+from utils.limiter import limiter
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -50,7 +51,6 @@ app = FastAPI(
 )
 
 # --- Rate Limiting Setup ---
-limiter = Limiter(key_func=get_remote_address, default_limits=["10/hour"])
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # --- End Rate Limiting Setup ---
