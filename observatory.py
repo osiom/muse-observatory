@@ -155,8 +155,8 @@ async def handle_share(oracle_day: Oracle, user_input: str, share_button: ui.but
         # Save to database
         logger.info("📝 Saving inspiration and cosmic projects to the ledger...")
         oracle_day.save_inspiration(user_input, projects_data["projects"])
-        logger.info(f"🌌 Inspiration shared with the {oracle_day.muse_name}!")
-        ui.notify(f"Shared with the {oracle_day.muse_name}!", type="positive")
+        logger.info(f"🌌 Inspiration shared with {oracle_day.muse_name}!")
+        ui.notify(f"Shared with {oracle_day.muse_name}!", type="positive")
     except Exception as e:
         logger.error(f"☄️ Sandstorm turbulence during share: {str(e)}")
         ui.notify(f"Sandstorm turbulences!: {str(e)}", type="negative")
