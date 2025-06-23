@@ -182,7 +182,7 @@ def observatory():
         with ui.column().classes("w-full text-center").style("padding-top: 20px;"):
             # Logo and headers - centered alignment
             with ui.row().classes("w-full justify-center mb-4"):
-                with open("static/logo.png", "rb") as img_file:
+                with open("img/logo.png", "rb") as img_file:
                     logo_base64 = base64.b64encode(img_file.read()).decode()
                     ui.html(
                         f"""
