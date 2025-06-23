@@ -9,10 +9,10 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
-from config.db import close_db_pool, init_db_pool
-from logger import get_logger
+from db.db import close_db_pool, init_db_pool
 from models.schemas import AppInfoResponse
 from observatory import observatory
+from utils.logger import get_logger
 
 logger = get_logger(__name__)
 

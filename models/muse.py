@@ -4,9 +4,9 @@ from typing import Any, Dict, List
 
 from psycopg2.extras import RealDictCursor
 
-from config.db import get_db_connection, return_db_connection
-from logger import get_logger
+from db.db import get_db_connection, return_db_connection
 from models.schemas import InspirationModel, ProjectModel
+from utils.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -53,6 +53,12 @@ CHART = {
         "support_color": "#F2AF7E",
         "astro_color": "#FBFBFB",
         "name": "Solis",
+    },
+    "cocoex": {
+        "color": "#000000",
+        "support_color": "#626262",
+        "astro_color": "#FBFBFB",
+        "name": "Cocoex",
     },
 }
 
