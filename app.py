@@ -9,7 +9,6 @@ from nicegui import app as nicegui_app
 from nicegui import ui
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
-from slowapi.util import get_remote_address
 
 from db.db import close_db_pool, init_db_pool
 from models.schemas import AppInfoResponse
@@ -52,7 +51,7 @@ nicegui_app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handle
 
 # Health check endpoint
 @nicegui_app.get("/api/health")
-@limiter.limit("10/minute")
+@limiter.limit("5/minute")
 async def health_check(request: Request):
     """Health check endpoint for monitoring."""
     return {"status": "healthy", "service": "muse-observatory", "version": "1.0.0"}
@@ -60,7 +59,7 @@ async def health_check(request: Request):
 
 # Additional API endpoints
 @nicegui_app.get("/api/info", response_model=AppInfoResponse)
-@limiter.limit("10/minute")
+@limiter.limit("5/minute")
 async def app_info(request: Request):
     """Get application information."""
     return AppInfoResponse(
