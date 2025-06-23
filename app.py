@@ -50,7 +50,7 @@ app = FastAPI(
 )
 
 # --- Rate Limiting Setup ---
-limiter = Limiter(key_func=get_remote_address, default_limits=["30/hour"])
+limiter = Limiter(key_func=get_remote_address, default_limits=["10/hour"])
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # --- End Rate Limiting Setup ---
