@@ -129,30 +129,32 @@ def get_text_css(color: str):
             .question-container {{
                 width: 100%;
                 max-width: 800px;
-                margin: 0 auto;
+                margin: 0 auto;  /* Center the container */
                 padding: 1rem;
                 box-sizing: border-box;
                 display: flex;
                 flex-direction: column;
-                align-items: center;
+                align-items: center;  /* Center child elements */
                 justify-content: center;
-                min-height: 66px; /* Prevents layout shift when text appears */
+                min-height: 66px;
                 position: relative;
-                overflow: hidden; /* Prevents content from breaking out */
+                overflow: hidden;
+                text-align: center;  /* Force center alignment for all text inside */
             }}
 
             /* Question text */
             .question-text {{
-                font-size: 16px;
-                width: 100%;               /* ensures it respects parent width */
-                box-sizing: border-box;   /* includes padding in width */
-                margin: 0 0 10px 0;
+                font-size: 16px;  /* Reduce from 18px to 16px */
+                width: 100%;
+                box-sizing: border-box;
+                margin: 0 auto 10px auto;  /* Center with auto margins */
                 padding: 0 1rem;
                 font-style: normal;
-                text-align: center;
-                line-height: 1.4;
+                text-align: center !important;  /* Force center alignment */
+                line-height: 1.4;  /* Reduce from 1.6 to 1.4 */
                 max-width: 800px;
                 text-shadow: 0 2px 2px rgba(0,0,0,0.3);
+                display: block;  /* Ensure it's a block element */
             }}
 
             /* Input container */

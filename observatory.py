@@ -216,8 +216,10 @@ def observatory(request: Request):
 
             # Question and input
             ui.label(oracle_day.question_asked).classes(
-                "question-text text-center"
-            ).style("margin-top: 0px; margin-bottom: 2px;")
+                "question-text text-center w-full"  # Add w-full class
+            ).style(
+                "margin-top: 0px; margin-bottom: 10px; text-align: center !important;"
+            )
 
             with ui.column().classes("input-container w-full mx-auto max-w-2xl"):
                 user_input = ui.textarea(
