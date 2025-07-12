@@ -31,75 +31,91 @@ def apply_styles(color: str, support_color: str, astro_color: str):
 
 
 def show_projects_dialog(projects: List[Dict], muse_name: str, muse_color: str) -> bool:
-    """Display projects in a dialog with muse-themed styling"""
+    """Display projects in a mobile-optimized dialog with muse-themed styling"""
     logger.info(
         f"🌌 Opening projects dialog for muse '{muse_name}' with {len(projects)} cosmic projects."
     )
-    dialog = ui.dialog().classes("w-full max-w-lg")
-    with dialog, ui.card().classes("w-full p-0 overflow-hidden"):
-        ui.html(
-            """
-            <div style="
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background-size: cover;
-                opacity: 0.2;
-                z-index: -1;
-            "></div>
-        """
-        )
 
-        # Center everything with flex and items-center
-        with ui.column().classes("w-full p-4 gap-3 relative items-center"):
-            # Header with muse reference - already centered
+    dialog = ui.dialog().classes("w-full h-full flex items-center justify-center p-4")
+
+    with dialog:
+        # Main container with margins for background visibility
+        with ui.card().classes("w-full max-w-sm mx-4 max-h-[85vh] overflow-hidden"):
+            # Background overlay
             ui.html(
-                f"""
-                <div class="text-2xl font-bold text-center text-black"
-                     style="text-shadow: 0 1px 2px rgba(0,0,0,0.2); line-height: 1.3;">
-                    Guided by inspiration,<br>
-                    <span style="color: {muse_color};">{muse_name}</span> connects you to these projects
-                </div>
-            """
+                """
+                <div style="
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background-size: cover;
+                    opacity: 0.2;
+                    z-index: -1;
+                "></div>
+                """
             )
 
-            # Projects list container - center the cards themselves
-            with ui.column().classes("w-full items-center"):
-                for project in projects:
-                    logger.info(
-                        f"🚀 Displaying project: {project['project_name']} (by {project['organization']})"
+            with ui.column().classes("w-full p-3 gap-2 relative"):
+                # Compact header for mobile
+                ui.html(
+                    f"""
+                    <div class="text-base font-bold text-center text-black mb-1"
+                         style="text-shadow: 0 1px 2px rgba(0,0,0,0.2); line-height: 1.1;">
+                        <span style="color: {muse_color};">{muse_name}</span> Projects
+                    </div>
+                    """
+                )
+
+                # Compact projects container
+                with ui.column().classes("w-full gap-2"):
+                    for project in projects:
+                        logger.info(
+                            f"🚀 Displaying project: {project['project_name']} (by {project['organization']})"
+                        )
+
+                        with ui.card().classes(
+                            "w-full p-2 bg-white bg-opacity-90 border-l-2"
+                        ).style(f"border-left-color: {muse_color}"):
+                            with ui.column().classes("w-full gap-1"):
+                                # Project name - very compact
+                                ui.label(project["project_name"]).classes(
+                                    "text-sm font-semibold text-black leading-tight"
+                                ).style(
+                                    "word-wrap: break-word; max-height: 2.5em; overflow: hidden;"
+                                )
+
+                                # Organization - smaller text
+                                ui.label(f"by {project['organization']}").classes(
+                                    "text-xs text-gray-700"
+                                ).style(
+                                    "word-wrap: break-word; max-height: 1.2em; overflow: hidden;"
+                                )
+
+                                # Compact info row
+                                with ui.row().classes(
+                                    "items-center justify-between gap-2"
+                                ):
+                                    ui.label(f"{project['geographic_level']}").classes(
+                                        "text-xs text-gray-600"
+                                    )
+
+                                    # Compact link
+                                    with ui.row().classes("items-center gap-1"):
+                                        ui.icon("link", size="xs").classes(
+                                            "text-primary"
+                                        )
+                                        ui.link(
+                                            "Visit",
+                                            project["link_to_organization"],
+                                            new_tab=True,
+                                        ).classes("text-primary text-xs")
+
+                    # Close button with muse color
+                    ui.button("Close", on_click=dialog.close).classes(
+                        "dialog-button w-full mt-2"
                     )
-                    with ui.card().classes(
-                        "w-full p-3 bg-white bg-opacity-90 border-l-4 mx-auto"
-                    ).style(f"border-left-color: {muse_color}"):
-                        # Center all content within each card
-                        with ui.column().classes(
-                            "items-center justify-center text-center w-full"
-                        ):
-                            ui.label(project["project_name"]).classes(
-                                "text-lg font-semibold text-black"
-                            )
-                            ui.label(f"by {project['organization']}").classes(
-                                "text-md text-gray-800"
-                            )
-                            ui.label(f"Scope: {project['geographic_level']}").classes(
-                                "text-sm text-gray-600"
-                            )
-                            # Center the link row
-                            with ui.row().classes("items-center justify-center"):
-                                ui.icon("link", color="primary")
-                                ui.link(
-                                    "Visit",
-                                    project["link_to_organization"],
-                                    new_tab=True,
-                                ).classes("text-primary")
-
-            # Close button - already full width and centered
-            ui.button("Close", on_click=dialog.close).classes(
-                "dialog-button w-full mt-4"
-            )
     return dialog
 
 
@@ -165,7 +181,7 @@ async def handle_share(oracle_day: Oracle, user_input: str, share_button: ui.but
 
 
 @ui.page("/observatory")
-@limiter.limit("100/minute")
+@limiter.limit("10/minute")
 def observatory(request: Request):
     logger.info("🛰️ Rendering the Observatory page — aligning the cosmic interface...")
     oracle_day = Oracle()

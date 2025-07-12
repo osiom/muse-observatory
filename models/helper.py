@@ -29,7 +29,7 @@ class HelpButton:
                         text-shadow: 0 0 10px rgba(255,255,255,0.3);
                     ">
                         <h2 style="font-size: 1.2rem; font-weight: bold; margin: 0;">
-                            🔭 Observatory Guide
+                            🔭 Observatory Instructions
                         </h2>
                     </div>
                 """
@@ -45,19 +45,19 @@ class HelpButton:
                         font-size: 0.85rem;
                     ">
                         <p style="margin-bottom: 0.75rem;">
-                            Welcome to <a href='https://cocoex.xyz' target='_blank' style='color:#aaf; text-decoration:underline;'>cocoex</a> Observatory! Each day brings a new <strong>Muse</strong> with unique energy and theme.
+                            Welcome to Muse Observatory! Each day brings a new <strong>Muse</strong> with unique energy and theme.
                         </p>
 
                         <p style="margin-bottom: 0.75rem;">
                             <strong>🌌 How it works:</strong><br>
-                            • Get a fun fact and inspiring question<br>
+                            • Get inspired with a fun-fact<br>
                             • Share your thoughts with the Muse<br>
                             • Discover matching real-world projects
                         </p>
 
                         <p style="margin-bottom: 0.75rem;">
-                            <strong>🛰️ Your impact:</strong><br>
-                            Your answers become stars in our creative constellation, helping build a shared resource for future collaborations.
+                            <strong>🌟 Building together:</strong><br>
+                            Projects are added to our constellation, creating a shared resource for future collaborations.
                         </p>
 
                         <p style="margin-bottom: 0.5rem; font-style: italic; color: rgba(255,255,255,0.7); font-size: 0.8rem;">

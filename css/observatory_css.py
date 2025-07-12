@@ -70,12 +70,15 @@ def get_text_css(color: str):
                 padding: 10px !important;           /* Adjust padding for shorter height */
                 font-family: 'Cormorant Garamond' !important;
                 box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                text-align: left !important;
             }}
 
             .clean-input::placeholder {{
                 color: #666 !important;
                 font-style: italic;
                 opacity: 1 !important;
+                text-align: left !important;
+                padding-left: 4px !important;
             }}
 
             /* Buttons */
