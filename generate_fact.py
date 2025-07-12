@@ -117,13 +117,14 @@ def check_fact_exists(date: datetime):
 
 def generate_fun_fact(day_info: dict, used_kingdom_life: list) -> FunFactModel:
     """Generate a fun fact using OpenAI API"""
-    prompt = f"""Generate a fascinating and scientifically accurate fun fact about an organism in the natural world that relates to {day_info['cause']}.
+    prompt = f"""Generate a fascinating and scientifically accurate fun fact about an organism in the five kingdom's of life that relates to {day_info['cause']}.
 
-    The fact should:
-    - Focus on how this organism contributes to or addresses {day_info['cause']}
-    - Be 2-3 sentences in length
+    'fun_fact':
+    - Focused on the organism and its unique adaptations or behaviors
+    - Be 1-2 sentences in length
     - Be appropriate for general audiences
-    - 'question_asked': The provoking question separated out. Is a thought-provoking question that encourages readers to consider how this natural adaptation might inspire sustainable transformation or innovation. Make the question engaging and actionable for the user that reads.
+    - 'question_asked': The provoking question separated out. Is a thought-provoking question that encourages readers to consider how this natural adaptation might inspire sustainable transformation or innovation.
+            Make the question engaging and actionable for the user that reads. Don't repeat the fun fact in the question, but rather ask something that relates to the fun fact and the cause of the day. Be less than a sentence short
     - 'fact_check_link: include a fact check for this information by giving me an URL that:
         - Points to a reliable, up-to-date, and accessible webpage
         - Is from an authoritative organization (e.g., WWF, IUCN, National Geographic, academic or government sites)

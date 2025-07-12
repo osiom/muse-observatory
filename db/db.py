@@ -14,7 +14,7 @@ DB_CONFIG = {
     "dbname": os.getenv("DB_NAME", "muse_observatory"),
     "user": os.getenv("DB_USER", "museuser"),
     "password": os.getenv("DB_PASSWORD", "musepassword"),
-    "host": os.getenv("DB_HOST", "postgres"),
+    "host": os.getenv("DB_HOST", "localhost"),
     "port": os.getenv("DB_PORT", "5432"),
 }
 

@@ -66,7 +66,7 @@ def show_projects_dialog(projects: List[Dict], muse_name: str, muse_color: str) 
             )
 
             # Projects list container - center the cards themselves
-            with ui.column().classes("w-full gap-3 items-center"):
+            with ui.column().classes("w-full items-center"):
                 for project in projects:
                     logger.info(
                         f"🚀 Displaying project: {project['project_name']} (by {project['organization']})"
@@ -76,7 +76,7 @@ def show_projects_dialog(projects: List[Dict], muse_name: str, muse_color: str) 
                     ).style(f"border-left-color: {muse_color}"):
                         # Center all content within each card
                         with ui.column().classes(
-                            "gap-2 items-center justify-center text-center w-full"
+                            "items-center justify-center text-center w-full"
                         ):
                             ui.label(project["project_name"]).classes(
                                 "text-lg font-semibold text-black"
@@ -88,7 +88,7 @@ def show_projects_dialog(projects: List[Dict], muse_name: str, muse_color: str) 
                                 "text-sm text-gray-600"
                             )
                             # Center the link row
-                            with ui.row().classes("items-center justify-center gap-2"):
+                            with ui.row().classes("items-center justify-center"):
                                 ui.icon("link", color="primary")
                                 ui.link(
                                     "Visit",
@@ -165,7 +165,7 @@ async def handle_share(oracle_day: Oracle, user_input: str, share_button: ui.but
 
 
 @ui.page("/observatory")
-@limiter.limit("5/minute")
+@limiter.limit("100/minute")
 def observatory(request: Request):
     logger.info("🛰️ Rendering the Observatory page — aligning the cosmic interface...")
     oracle_day = Oracle()
@@ -179,10 +179,10 @@ def observatory(request: Request):
         ui.html('<div class="cosmic-overlay"></div>')
         ui.html('<div class="static-overlay"></div>')
 
-        # Content with forced center alignment and normal spacing
-        with ui.column().classes("w-full text-center").style("padding-top: 20px;"):
-            # Logo and headers - centered alignment
-            with ui.row().classes("w-full justify-center mb-4"):
+        # Content with forced center alignment and minimal spacing
+        with ui.column().classes("w-full text-center").style("padding-top: 0px;"):
+            # Logo and headers - centered alignment with reduced spacing
+            with ui.row().classes("w-full justify-center"):
                 with open("img/logo.png", "rb") as img_file:
                     logo_base64 = base64.b64encode(img_file.read()).decode()
                     ui.html(
@@ -195,38 +195,36 @@ def observatory(request: Request):
                     """
                     )
             help_button.render()
-            # Text elements with proper spacing and center alignment
+            # Text elements with minimal spacing
             ui.label("Today's Muse").classes("muse-subtitle text-center").style(
-                "margin-top: 10px; margin-bottom: 5px;"
+                "margin-top: 0px; margin-bottom: 0px;"
             )
             ui.label(oracle_day.muse_name.upper()).classes(
                 "muse-title text-center"
-            ).style("margin-bottom: 5px;")
+            ).style("margin-top: 0px; margin-bottom: 0px;")
             ui.label(f"for {oracle_day.social_cause}").classes(
                 "muse-subtitle text-center"
-            ).style("margin-bottom: 20px;")
+            ).style("margin-top: 0px; margin-bottom: 2px;")
 
             # Terminal-style elements
             ui.label(oracle_day.fun_fact).classes("fun-fact text-center").style(
-                "margin-bottom: 10px;"
+                "margin-top: 0px; margin-bottom: 2px;"
             )
             ui.link("Source", oracle_day.fact_check_link).classes(
                 "source-link text-center"
-            ).style("margin-bottom: 30px;")
+            ).style("margin-top: 0px; margin-bottom: 4px;")
 
             # Question and input
             ui.label(oracle_day.question_asked).classes(
                 "question-text text-center"
-            ).style("margin-bottom: 20px;")
+            ).style("margin-top: 0px; margin-bottom: 2px;")
 
             with ui.column().classes("input-container w-full mx-auto max-w-2xl"):
-                user_input = (
-                    ui.textarea(placeholder="Share your inspiration...")
-                    .classes(
-                        "w-full text-base rounded-2xl border border-white/30 bg-white/70 backdrop-blur-sm "
-                        "shadow-[0_6px_18px_rgba(0,0,0,0.20)] transition-all focus:ring-2 focus:ring-purple-400 focus:ring-offset-2"
-                    )
-                    .style("padding: 1rem; resize: vertical;")
+                user_input = ui.textarea(
+                    placeholder="Share your inspiration..."
+                ).classes(
+                    "w-full text-sm sm:text-base rounded-2xl border border-white/30 bg-white/70 backdrop-blur-sm "
+                    "shadow-[0_6px_18px_rgba(0,0,0,0.20)] transition-all focus:ring-2 focus:ring-purple-400 focus:ring-offset-2"
                 )
 
             async def on_share_click():
@@ -242,30 +240,174 @@ def observatory(request: Request):
                 f"SHARE WITH {oracle_day.muse_name.upper()}", on_click=on_share_click
             ).classes("muse-button mx-auto")
 
-    # Add minimal CSS for proper alignment
+    # Add mobile-responsive CSS with fixed positioning and height constraints
     ui.add_head_html(
         """
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-    /* Logo container alignment */
+    /* Fix body and html to prevent infinite scrolling */
+    html, body {
+        height: 100vh !important;
+        max-height: 100vh !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        position: relative !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+    }
+
+    /* Constrain cosmic background elements */
+    .cosmic-overlay, .dust-overlay {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+        overflow: hidden !important;
+        z-index: -1 !important;
+    }
+
+    /* Constrain all cosmic elements */
+    .star, .shooting-star, .cosmic-dust, .nebula-particle, .pulsar {
+        position: fixed !important;
+        max-height: 100vh !important;
+        overflow: hidden !important;
+    }
+
+    /* Logo container alignment - responsive */
     .logo-container {
-        position: fixed;
-        top: 20px;
+        top: 8px;
         left: 0;
         right: 0;
         display: flex;
         justify-content: center;
         z-index: 1000;
+        margin-bottom: 0px;
     }
     .logo-img {
-            width: 60px;
-            height: 60px;
-            object-fit: contain;
+        width: 50px;
+        height: 50px;
+        object-fit: contain;
     }
-    /* Ensure all text elements are properly centered */
+
+    /* Main container with proper height constraints and small margins */
+    .main-container {
+        min-height: 100vh !important;
+        /* max-height: 100vh !important; */
+        /* height: 100vh !important; */
+        width: calc(100% - 1rem) !important;
+        max-width: calc(100% - 1rem) !important;
+        margin: 0 0.5rem !important;
+        padding: 0.5rem !important;
+        padding-top: 0 !important;  /* Remove top padding */
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: flex-start !important;  /* Start from top */
+        box-sizing: border-box !important;
+    }
+
+    @media (max-width: 430px) {
+        .muse-title {
+            font-size: 36px !important;  /* Reduce title size on mobile */
+        }
+
+        .muse-subtitle {
+            font-size: 16px !important;  /* Reduce subtitle size on mobile */
+        }
+
+        .fun-fact, .question-text {
+            font-size: 14px !important;  /* Reduce text size on mobile */
+            line-height: 1.3 !important;
+        }
+        .main-container {
+            justify-content: flex-start !important;
+            width: calc(100% - 0.75rem) !important;
+            max-width: calc(100% - 0.75rem) !important;
+            margin: 0 0.375rem !important;
+            padding: 0.25rem !important;
+            padding-top: 0 !important;  /* Start from very top */
+            padding-bottom: 10px !important;
+        }
+
+        /* Adjust logo position to account for no top padding */
+        .logo-container {
+            top: 5px !important;  /* Reduced from 8px */
+            margin-bottom: 5px !important;
+        }
+    }
+
+    @media (max-width: 375px) {
+        /* iPhone 13 mini specific */
+        .main-container {
+            justify-content: flex-start !important;
+            width: calc(100% - 0.5rem) !important;
+            max-width: calc(100% - 0.5rem) !important;
+            margin: 0 0.25rem !important;
+            padding: 0.25rem !important;
+            padding-top: 0 !important;  /* Start from very top */
+            padding-bottom: 8px !important;
+        }
+
+        /* Adjust logo position */
+        .logo-container {
+            top: 3px !important;  /* Very close to top */
+            margin-bottom: 3px !important;
+        }
+    }
+
+    /* Ensure all text elements are properly centered with minimal spacing */
     .muse-subtitle, .muse-title, .fun-fact, .source-link, .question-text {
         text-align: center !important;
         display: block !important;
         width: 100% !important;
+        margin-top: 0px !important;
+        margin-bottom: 0px !important;
+        padding-top: 0px !important;
+        padding-bottom: 0px !important;
+    }
+
+    /* Minimize spacing between UI elements */
+    .main-container > * {
+        margin-top: 0px !important;
+        margin-bottom: 0px !important;
+    }
+
+    /* Ensure content fits within viewport */
+    * {
+        box-sizing: border-box !important;
+    }
+
+    /* Mobile-specific input styling */
+    @media (max-width: 430px) {
+        input, textarea {
+            font-size: 16px !important; /* Prevents zoom on iOS */
+            -webkit-appearance: none !important;
+            border-radius: 12px !important;
+        }
+    }
+
+    /* Safari-specific fixes */
+    @supports (-webkit-touch-callout: none) {
+        .main-container {
+            -webkit-overflow-scrolling: touch !important;
+        }
+
+        /* Additional iOS Safari fixes */
+        body {
+            position: fixed !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .main-container {
+            position: relative !important;
+            height: 100vh !important;
+            overflow-y: scroll !important;
+        }
     }
     </style>
     """

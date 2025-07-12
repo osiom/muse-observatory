@@ -12,26 +12,27 @@ def get_text_css(color: str):
     css = f"""
     <style>
             .main-container {{
-                width: 100%;
-                max-width: 900px;  /* Adjust as needed */
-                margin: 0 auto;
-                padding: 2rem;
-                text-align: center; /* Center text content */
+                width: calc(100% - 1rem);
+                max-width: none;
+                margin: 0 0.5rem;
+                padding: 0.5rem;
+                padding-top: 0;  /* Remove top padding */
+                text-align: center;
+                box-sizing: border-box;
             }}
-
             /* Text styles */
             .muse-title {{
                 font-size: 46px;
                 font-weight: bold;
                 text-align: center;
-                margin: 0;
+                margin: 0 0 5px 0;
                 text-shadow: 0 2px 4px rgba(0,0,0,0.5);
             }}
 
             .muse-subtitle {{
                 font-size: 20px;
                 text-align: center;
-                margin: 0;
+                margin: 0 0 5px 0;
                 text-shadow: 0 2px 4px rgba(0,0,0,0.5);
             }}
 
@@ -40,7 +41,7 @@ def get_text_css(color: str):
                 font-style: normal;
                 text-align: center;
                 line-height: 1.6;
-                margin: 0;
+                margin: 0 0 5px 0;
                 max-width: 800px;
                 text-shadow: 0 2px 2px rgba(0,0,0,0.3);
             }}
@@ -59,14 +60,14 @@ def get_text_css(color: str):
             .clean-input {{
                 width: 800px !important;
                 max-width: 100% !important;
-                min-height: 50px !important;
-                margin: 0 auto !important;
+                min-height: 35px !important;
+                margin: 0 auto 10px auto !important;
                 font-size: 16px !important;
                 background: white !important;
                 color: black !important;
                 border: 2px solid {color} !important;
                 border-radius: 12px !important;
-                padding: 12px !important;           /* Adjust padding for shorter height */
+                padding: 10px !important;           /* Adjust padding for shorter height */
                 font-family: 'Cormorant Garamond' !important;
                 box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             }}
@@ -83,10 +84,11 @@ def get_text_css(color: str):
                 color: white !important;
                 font-size: 10px !important;
                 font-color: white;
-                padding: 12px 36px !important;
+                padding: 10px 30px !important;
                 border: 3px solid {color} !important;
                 border-radius: 24px !important;
                 cursor: pointer;
+                margin-top: 5px !important;
                 transition: all 0.3s;
             }}
             .notification-container, .notification {{
@@ -134,21 +136,21 @@ def get_text_css(color: str):
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                min-height: 120px; /* Prevents layout shift when text appears */
+                min-height: 66px; /* Prevents layout shift when text appears */
                 position: relative;
                 overflow: hidden; /* Prevents content from breaking out */
             }}
 
             /* Question text */
             .question-text {{
-                font-size: 18px;
+                font-size: 16px;
                 width: 100%;               /* ensures it respects parent width */
                 box-sizing: border-box;   /* includes padding in width */
-                margin: 0 auto;           /* centers it */
+                margin: 0 0 10px 0;
                 padding: 0 1rem;
                 font-style: normal;
                 text-align: center;
-                line-height: 1.6;
+                line-height: 1.4;
                 max-width: 800px;
                 text-shadow: 0 2px 2px rgba(0,0,0,0.3);
             }}
@@ -377,14 +379,14 @@ def get_cosmic_css(
 
     # Mixed star types for realistic variety
     star_types = [
-        {"class": "star distant", "weight": 0.6},
-        {"class": "star bright", "weight": 0.15},
-        {"class": "star colored", "weight": 0.2},
-        {"class": "pulsar", "weight": 0.05},
+        {"class": "star distant", "weight": 0.5},
+        {"class": "star bright", "weight": 0.3},
+        {"class": "star colored", "weight": 0.1},
+        {"class": "pulsar", "weight": 0.02},
     ]
 
     # Create more varied stars
-    for _ in range(120):
+    for _ in range(50):
         star_type = random.choices(
             star_types, weights=[t["weight"] for t in star_types]
         )[0]
@@ -413,7 +415,7 @@ def get_cosmic_css(
         """
 
     # Enhanced nebula particles with more muse/astro color influence
-    for _ in range(50):
+    for _ in range(12):
         top = random.uniform(0, 100)
         left = random.uniform(0, 100)
         size = random.uniform(10, 30)
@@ -429,7 +431,7 @@ def get_cosmic_css(
         """
 
     # Enhanced cosmic dust
-    for _ in range(80):
+    for _ in range(7):
         top = random.uniform(0, 100)
         left = random.uniform(0, 100)
         size = random.uniform(0.5, 2)
@@ -452,7 +454,7 @@ def get_cosmic_css(
         # "shooting-star-bottom-to-top"
     ]
 
-    for _ in range(3):
+    for _ in range(1):
         direction = random.choice(directions)
         top = random.uniform(-20, 100)
         left = random.uniform(-20, 100)
@@ -514,24 +516,6 @@ def get_load_cosmic_css(color: str) -> tuple[str, str]:
             box-shadow: 0 0 8px 2px {color} !important;
             z-index: 10000 !important;
         }}
-        .shooting-star {{
-            position: absolute !important;
-            width: 60px !important;
-            height: 4px !important;
-            background: linear-gradient(90deg, {color}, transparent) !important;
-            border-radius: 2px !important;
-            animation: shooting-star 2s linear infinite !important;
-            opacity: 0 !important;
-            box-shadow: 0 0 10px {color} !important;
-            z-index: 10000 !important;
-        }}
-        .cosmic-dust {{
-            position: absolute !important;
-            background-color: rgba(255,255,255,0.3) !important;
-            border-radius: 50% !important;
-            animation: float 4s ease-in-out infinite !important;
-            z-index: 10000 !important;
-        }}
     </style>
     """
     stars_html = ""
@@ -539,7 +523,7 @@ def get_load_cosmic_css(color: str) -> tuple[str, str]:
         top = random.uniform(0, 100)
         left = random.uniform(0, 100)
         delay = random.uniform(0, 3)
-        duration = random.uniform(2, 4)
+        duration = random.uniform(1, 3)
         size = random.uniform(2, 5)
 
         stars_html += f"""
@@ -553,36 +537,4 @@ def get_load_cosmic_css(color: str) -> tuple[str, str]:
             "></div>
         """
 
-    # Add cosmic dust particles
-    for _ in range(15):
-        top = random.uniform(0, 100)
-        left = random.uniform(0, 100)
-        size = random.uniform(1, 3)
-        delay = random.uniform(0, 4)
-
-        stars_html += f"""
-            <div class="cosmic-dust" style="
-                top: {top}%;
-                left: {left}%;
-                width: {size}px;
-                height: {size}px;
-                animation-delay: {delay}s;
-            "></div>
-        """
-
-    # Add shooting stars
-    for _ in range(3):
-        top = random.uniform(0, 50)
-        left = random.uniform(-10, 0)
-        delay = random.uniform(0, 6)
-        duration = random.uniform(2, 4)
-
-        stars_html += f"""
-            <div class="shooting-star" style="
-                top: {top}%;
-                left: {left}%;
-                animation-delay: {delay}s;
-                animation-duration: {duration}s;
-            "></div>
-        """
     return css, stars_html
