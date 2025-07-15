@@ -121,7 +121,7 @@ def generate_fun_fact(day_info: dict, used_kingdom_life: list) -> FunFactModel:
 
     'fun_fact':
     - Focused on the organism and its unique adaptations or behaviors
-    - Be 1-2 sentences in length
+    - Be 2 max 3 sentences in length
     - Be appropriate for general audiences
     - 'question_asked': The provoking question separated out. Is a thought-provoking question that encourages readers to consider how this natural adaptation might inspire sustainable transformation or innovation.
             Make the question engaging and actionable for the user that reads. Don't repeat the fun fact in the question, but rather ask something that relates to the fun fact and the cause of the day. Be less than a sentence short
