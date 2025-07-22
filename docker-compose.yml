@@ -1,6 +1,15 @@
 version: '3.8'
 
 services:
+  # Volume initialization service to ensure proper permissions
+  init-volume:
+    image: alpine:latest
+    container_name: muse-volume-init
+    command: sh -c "mkdir -p /db_files && chmod -R 777 /db_files && echo 'Volume initialized with proper permissions'"
+    volumes:
+      - ./db_files:/db_files
+    restart: "no"
+
   app:
     build:
       context: .
@@ -9,13 +18,15 @@ services:
         - ENVIRONMENT=${ENVIRONMENT:-production}
     container_name: muse-observatory-app
     restart: unless-stopped
+    depends_on:
+      - init-volume
     ports:
       - "${APP_PORT:-8080}:8080"
     volumes:
       # Mount source code in development
       - ${PWD}:/app${MOUNT_SUFFIX:-}
-      # Mount persistent data directory for TinyDB
-      - muse-data:/app/db_files
+      # Mount local db_files directory directly
+      - ./db_files:/app/db_files:rw
     environment:
       # Application configuration
       - HOST=0.0.0.0
@@ -53,8 +64,3 @@ networks:
   muse-network:
     driver: bridge
     name: muse_observatory_network
-
-volumes:
-  muse-data:
-    name: muse_observatory_data
-    driver: local

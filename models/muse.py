@@ -4,7 +4,7 @@ from typing import Any, Dict, List
 
 from tinydb import Query
 
-from db.db import get_db_connection, return_db_connection
+from db.db import get_db, get_with_logging, insert_with_logging, search_with_logging
 from models.schemas import InspirationModel, ProjectModel
 from utils.logger import get_logger
 
@@ -71,6 +71,7 @@ class Oracle:
         fact = Oracle.get_todays_fact()
 
         logger.info("✨ Seeking which Muse is guiding us through the universe today...")
+        logger.info(f"fact: {fact}, muse: {fact.get('muse')}")
         self.daily_muse = fact.get("muse", "cocoex")
         logger.info(f"🌠 Muse of the day: {self.daily_muse}")
         self.social_cause = fact.get("social_cause", "Unknown")
@@ -93,30 +94,39 @@ class Oracle:
         """Fetch today's fact from the cosmic database"""
         logger.info("🔮 Fetching today's fact from the cosmic archives...")
         try:
-            db = get_db_connection()
+            db = get_db()
             today = datetime.now().strftime("%Y-%m-%d")
+            logger.info(f"Looking for fact for date: {today}")
+
+            # Check if the daily_facts table exists
+            tables = db.tables()
+            logger.info(f"Available tables: {tables}")
+
             Facts = Query()
-            fact = db.table("daily_facts").get(Facts.date == today)
+            # Use the new logging helper
+            fact = get_with_logging("daily_facts", Facts.date == today)
 
             if fact:
                 logger.info("🌟 Fact found for today — the universe speaks!")
                 return fact
             else:
                 logger.warning("🌑 No fact found for today — the stars are silent.")
-                return {
+                logger.info("Creating a default fact for today")
+                default_fact = {
                     "muse": "cocoex",
                     "social_cause": "cocoex",
                     "fun_fact": "The oracle didn't answer today!",
                     "question_asked": "What is the meaning of life?",
                     "fact_check_link": "#",
                 }
+                return default_fact
         except Exception as e:
             logger.error(f"☄️ Database error in the cosmic archives: {e}")
             return {
                 "muse": "cocoex",
-                "social_cause": "Database Error",
-                "fun_fact": "Could not fetch fact today",
-                "question_asked": "Try again later?",
+                "social_cause": "cocoex",
+                "fun_fact": "The oracle didn't answer today!",
+                "question_asked": "What is the meaning of life?",
                 "fact_check_link": "#",
             }
 
@@ -131,40 +141,34 @@ class Oracle:
             f"📝 Saving inspiration from the observer to the cosmic ledger for muse {self.muse_name}..."
         )
         try:
-            db = get_db_connection()
             inspiration_id = str(uuid.uuid4())
 
-            # Insert inspiration
+            # Insert inspiration using logging helper
             logger.info("🌌 Inserting inspiration into the database...")
-            db.table("inspirations").insert(
-                {
-                    "date": datetime.now().strftime("%Y-%m-%d"),
-                    "id": inspiration_id,
-                    "day_of_week": datetime.now().strftime("%A"),
-                    "social_cause": self.social_cause,
-                    "muse": self.muse_name,
-                    "user_inspiration": inspiration.user_input,
-                    "created_at": datetime.now().isoformat(),
-                }
-            )
+            inspiration_data = {
+                "date": datetime.now().strftime("%Y-%m-%d"),
+                "id": inspiration_id,
+                "user_inspiration": inspiration.user_input,
+                "created_at": datetime.now().isoformat(),
+            }
+            insert_with_logging("inspirations", inspiration_data)
 
-            # Insert projects
+            # Insert projects using logging helper
             logger.info("🌠 Inserting related projects into the cosmic registry...")
             for project in inspiration.projects:
                 logger.info(
                     f"🚀 Inserting project: {project.project_name} (by {project.organization})"
                 )
-                db.table("projects").insert(
-                    {
-                        "id": str(uuid.uuid4()),
-                        "project_name": project.project_name,
-                        "organisation": project.organization,
-                        "geographical_level": project.geographic_level,
-                        "link_to_organisation": project.link_to_organization,
-                        "sk_inspiration": inspiration_id,
-                        "created_at": datetime.now().isoformat(),
-                    }
-                )
+                project_data = {
+                    "id": str(uuid.uuid4()),
+                    "project_name": project.project_name,
+                    "organisation": project.organization,
+                    "geographical_level": project.geographic_level,
+                    "link_to_organisation": project.link_to_organization,
+                    "sk_inspiration": inspiration_id,
+                    "created_at": datetime.now().isoformat(),
+                }
+                insert_with_logging("projects", project_data)
 
             logger.info(
                 f"🌌 Inspiration and projects for muse {self.muse_name} have been committed to the universe!"

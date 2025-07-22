@@ -5,8 +5,9 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from openai import OpenAI
-from tinydb import Query, TinyDB
+from tinydb import Query
 
+from db.db import get_db, get_with_logging, insert_with_logging, search_with_logging
 from models.schemas import FunFactModel
 from utils.logger import get_logger
 
@@ -82,9 +83,40 @@ MUSES = {
 }
 
 
-def get_db():
-    """Get database instance"""
-    return TinyDB(DB_FILE)
+def initialize_tables():
+    """Initialize database tables with sample data if needed"""
+    db = get_db()
+    tables = db.tables()
+
+    logger.info(f"Checking tables in database: {tables}")
+
+    # If daily_facts table is missing, create it with a test record
+    if "daily_facts" not in tables:
+        logger.warning("daily_facts table not found, initializing with test data")
+        current_date = datetime.now()
+        day_info = get_muse_for_today()
+
+        # Create test fact
+        test_fact = {
+            "date": current_date.strftime("%Y-%m-%d"),
+            "muse": day_info["muse"],
+            "day_of_week": day_info["day_name"],
+            "celestial_body": day_info["celestial_body"],
+            "color": day_info["color"],
+            "note": day_info["note"],
+            "social_cause": day_info["cause"],
+            "kingdoms_life_subject": "Test Organism",
+            "fun_fact": "This is a test fact automatically generated during initialization.",
+            "question_asked": "How can we make the world better today?",
+            "fact_check_link": "https://example.com",
+            "created_at": current_date.isoformat(),
+        }
+
+        doc_id = insert_with_logging("daily_facts", test_fact)
+        logger.info(f"Created test fact with ID {doc_id}")
+        return True
+
+    return False
 
 
 def get_muse_for_today():
@@ -93,19 +125,18 @@ def get_muse_for_today():
     return MUSES.get(day_of_week)
 
 
-def check_fact_exists(date: datetime):
+def check_fact_exists(date: datetime) -> bool:
     """Check if a fact already exists for the given date"""
     try:
-        db = get_db()
         Facts = Query()
-        result = db.table("daily_facts").get(Facts.date == date.strftime("%Y-%m-%d"))
-        return result is not None
+        date_str = date.strftime("%Y-%m-%d")
+        logger.info(f"Checking if fact exists for date: {date_str}")
+
+        fact = get_with_logging("daily_facts", Facts.date == date_str)
+        return fact is not None
     except Exception as e:
         logger.error(f"Error checking for existing fact: {e}")
         return False
-    finally:
-        if "db" in locals():
-            db.close()
 
 
 def generate_fun_fact(day_info: dict, used_kingdom_life: list) -> FunFactModel:
@@ -142,6 +173,9 @@ def generate_fun_fact(day_info: dict, used_kingdom_life: list) -> FunFactModel:
     """
 
     try:
+        logger.info(
+            f"Generating fun fact for {day_info['muse']} about {day_info['cause']}"
+        )
         response = client.chat.completions.create(
             model="gpt-4o",
             response_format={"type": "json_object"},
@@ -169,22 +203,24 @@ def generate_fun_fact(day_info: dict, used_kingdom_life: list) -> FunFactModel:
         )
 
 
-def get_used_kingdom_life(muse: str):
+def get_used_kingdom_life(muse: str) -> list:
     """
     Returns a list of distinct kingdoms_life_subject associated with the given muse.
     """
     try:
-        db = get_db()
         Facts = Query()
+        logger.info(f"Getting used kingdom life subjects for muse: {muse}")
 
-        # Get all facts for this muse
-        results = db.table("daily_facts").search(Facts.muse == muse)
+        # Use search with logging to get all facts for this muse
+        results = search_with_logging("daily_facts", Facts.muse == muse)
 
         # Extract distinct kingdoms_life_subject values
         kingdoms_life_set = {item.get("kingdoms_life_subject", "") for item in results}
         kingdoms_life_list = list(filter(None, kingdoms_life_set))
 
-        db.close()
+        logger.info(
+            f"Found {len(kingdoms_life_list)} existing kingdom life subjects for {muse}"
+        )
         return kingdoms_life_list
 
     except Exception as e:
@@ -194,57 +230,76 @@ def get_used_kingdom_life(muse: str):
 
 def store_fun_fact(date: datetime, day_info: dict, fact_info: FunFactModel):
     """Store the generated fun fact in the database"""
-    db = get_db()
     logger.info(
         f"📝 [DB] Storing fun fact for muse '{day_info['muse']}' on {date.strftime('%Y-%m-%d')}"
     )
 
     # Check if we already have a fact for today
     Facts = Query()
-    existing_fact = db.table("daily_facts").get(Facts.date == date.strftime("%Y-%m-%d"))
+    existing_fact = get_with_logging(
+        "daily_facts", Facts.date == date.strftime("%Y-%m-%d")
+    )
 
     if existing_fact:
         logger.info(
             f"Fun fact for {date.strftime('%Y-%m-%d')} already exists. Skipping."
         )
-        db.close()
         return
 
-    db.table("daily_facts").insert(
-        {
-            "date": date.strftime("%Y-%m-%d"),
-            "muse": str(day_info["muse"]),
-            "day_of_week": day_info["day_name"],
-            "celestial_body": day_info["celestial_body"],
-            "color": day_info["color"],
-            "note": day_info["note"],
-            "social_cause": day_info["cause"],
-            "kingdoms_life_subject": fact_info.kingdoms_life_subject,
-            "fun_fact": fact_info.fun_fact,
-            "question_asked": fact_info.question_asked,
-            "fact_check_link": fact_info.fact_check_link,
-            "created_at": datetime.now().isoformat(),
-        }
-    )
+    # Create the data structure
+    fact_data = {
+        "date": date.strftime("%Y-%m-%d"),
+        "muse": str(day_info["muse"]),
+        "day_of_week": day_info["day_name"],
+        "celestial_body": day_info["celestial_body"],
+        "color": day_info["color"],
+        "note": day_info["note"],
+        "social_cause": day_info["cause"],
+        "kingdoms_life_subject": fact_info.kingdoms_life_subject,
+        "fun_fact": fact_info.fun_fact,
+        "question_asked": fact_info.question_asked,
+        "fact_check_link": fact_info.fact_check_link,
+        "created_at": datetime.now().isoformat(),
+    }
+
+    # Insert with logging
+    insert_with_logging("daily_facts", fact_data)
 
     logger.info(f"🌠 [DB] Fun fact for muse '{day_info['muse']}' successfully stored!")
-    db.close()
 
 
 def main():
     """Main function to generate and store daily fun fact"""
     current_date = datetime.now()
+    logger.info(f"Generating fact for date: {current_date.strftime('%Y-%m-%d')}")
+
+    # Check database status
+    db = get_db()
+    tables = db.tables()
+    logger.info(f"Database contains tables: {tables}")
+
+    # Initialize tables if needed
+    initialized = initialize_tables()
+    if initialized:
+        logger.info("Database tables initialized with test data")
+        # If we just initialized the tables, we can exit as we've already created a fact
+        return
+
     if check_fact_exists(current_date):
         logger.info(
             f"🌑 [DB] Fact for {current_date.strftime('%Y-%m-%d')} already exists. Exiting."
         )
         return
+
     day_info = get_muse_for_today()
+    logger.info(f"Today's muse is {day_info['muse']} for {day_info['cause']}")
+
     used_kingdom_life = get_used_kingdom_life(day_info["muse"])
     logger.info(
         f"✨ [OpenAI] Generating fun fact for muse '{day_info['muse']}' ({day_info['cause']}) avoiding {used_kingdom_life} ..."
     )
     fact_info = generate_fun_fact(day_info, used_kingdom_life)
+
     store_fun_fact(current_date, day_info, fact_info)
     logger.info(
         f"🌌 [OpenAI] Successfully generated and stored fun fact about {fact_info.kingdoms_life_subject}"
