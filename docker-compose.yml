@@ -62,6 +62,38 @@ services:
       start_period: 40s
     command: python app.py
 
+  # Daily fact generation scheduler
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: muse-fact-scheduler
+    restart: unless-stopped
+    depends_on:
+      - init-volume
+    volumes:
+      - ${PWD}:/app${MOUNT_SUFFIX:-}
+      - ./db_files:/app/db_files:rw
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - DB_DIR=/app/db_files
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - PYTHONPATH=/app
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    networks:
+      - muse-network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    command: >
+      sh -c '
+        apk add --no-cache docker-cli
+        echo "Setting up cron job for daily fact generation at midnight"
+        echo "1 0 * * * cd /app && python generate_fact.py && docker compose -f /app/docker-compose.yml restart app" > /etc/crontabs/root
+        crond -f -l 8
+      '
+
 networks:
   muse-network:
     driver: bridge
