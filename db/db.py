@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Any, Dict, List, Optional, Union
 
 from dotenv import load_dotenv
 from tinydb import Query, TinyDB
@@ -100,6 +100,7 @@ def init_db_pool():
         raise
 
 
+# Legacy compatibility functions for older code
 def get_db_connection():
     """Get the database instance (compatibility with old code)"""
     return get_db()
@@ -108,15 +109,6 @@ def get_db_connection():
 def return_db_connection(conn: TinyDB) -> None:
     """No-op function for compatibility with old code"""
     pass
-
-
-def close_db_pool():
-    """Close the database connection"""
-    global _db_instance
-    if _db_instance:
-        _db_instance.close()
-        _db_instance = None
-        logger.info("Database connection closed")
 
 
 # Helper functions for data operations with logging
@@ -139,7 +131,9 @@ def insert_with_logging(table_name: str, data: dict) -> int:
     return doc_id
 
 
-def search_with_logging(table_name: str, query) -> list:
+def search_with_logging(
+    table_name: str, query: Union[Query, Dict[str, Any]]
+) -> List[Dict[str, Any]]:
     """Search data with detailed logging"""
     db = get_db()
     table = db.table(table_name)
@@ -158,7 +152,9 @@ def search_with_logging(table_name: str, query) -> list:
     return results
 
 
-def get_with_logging(table_name: str, query) -> dict:
+def get_with_logging(
+    table_name: str, query: Union[Query, Dict[str, Any]]
+) -> Optional[Dict[str, Any]]:
     """Get a single record with detailed logging"""
     db = get_db()
     table = db.table(table_name)

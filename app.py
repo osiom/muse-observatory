@@ -1,18 +1,16 @@
 import asyncio
 import base64
 import os
-import types
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from nicegui import app as nicegui_app
-from nicegui import run as nicegui_run
 from nicegui import ui
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
-from db.db import close_db_pool, init_db_pool
+from db.db import init_db_pool
 from models.schemas import AppInfoResponse
 from observatory import observatory
 from utils.limiter import limiter
@@ -20,36 +18,15 @@ from utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-# Patch NiceGUI's tear_down method to handle None process_pool
-original_tear_down = nicegui_run.tear_down
 
-
-def patched_tear_down():
-    """Patched version of NiceGUI's tear_down that handles None process_pool gracefully."""
-    try:
-        # Call the original tear_down but catch AttributeError
-        original_tear_down()
-    except AttributeError as e:
-        if "NoneType" in str(e) and "process_pool" in str(e):
-            logger.warning(
-                "Handled NiceGUI shutdown error with process_pool being None"
-            )
-        else:
-            # Re-raise if it's a different AttributeError
-            raise
-
-
-# Apply the patch
-nicegui_run.tear_down = patched_tear_down
-
-
-# Application lifespan manager
+# Application lifespan manager - simplified
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Handle application startup and shutdown events."""
     # Startup
     logger.info("🔭 Starting Muse Observatory...")
     try:
+        # Initialize database (create folder if needed)
         init_db_pool()
         logger.info("✅ Database initialized")
     except Exception as e:
@@ -58,13 +35,8 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    # Shutdown
+    # No explicit shutdown actions needed for TinyDB
     logger.info("🔄 Shutting down Muse Observatory...")
-    try:
-        close_db_pool()
-        logger.info("✅ Database connections closed")
-    except Exception as e:
-        logger.error(f"❌ Error during shutdown: {e}")
 
 
 # --- Rate Limiting Setup ---

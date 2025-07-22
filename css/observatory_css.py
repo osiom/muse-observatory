@@ -27,6 +27,7 @@ def get_text_css(color: str):
                 text-align: center;
                 margin: 0 0 5px 0;
                 text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+                color: #FFFFFF;
             }}
 
             .muse-subtitle {{
@@ -34,6 +35,7 @@ def get_text_css(color: str):
                 text-align: center;
                 margin: 0 0 5px 0;
                 text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+                color: #FFFFFF;
             }}
 
             .fun-fact {{
@@ -44,6 +46,7 @@ def get_text_css(color: str):
                 margin: 0 0 5px 0;
                 max-width: 800px;
                 text-shadow: 0 2px 2px rgba(0,0,0,0.3);
+                color: #FFFFFF;
             }}
 
             /* Input section */
@@ -127,6 +130,7 @@ def get_text_css(color: str):
                 text-align: center !important;
                 margin-left: auto;
                 margin-right: auto;
+                color: #FFFFFF;
             }}
             /* Question container styles */
             .question-container {{
@@ -158,6 +162,7 @@ def get_text_css(color: str):
                 max-width: 800px;
                 text-shadow: 0 2px 2px rgba(0,0,0,0.3);
                 display: block;  /* Ensure it's a block element */
+                color: #FFFFFF;
             }}
 
             /* Input container */
@@ -186,6 +191,12 @@ def get_text_css(color: str):
                 width: 100%;
                 margin: 6px;
             }}
+
+            /* Source link */
+            .source-link {{
+                color: {color} !important;
+                text-decoration: underline !important;
+            }}
         </style>
         """
     return css
@@ -199,19 +210,14 @@ def get_cosmic_css(
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=swap');
 
         body {{
-            background:
-                /* Primary gradient using muse and astro colors */
-                radial-gradient(ellipse at 30% 20%, {muse_color}40 0%, transparent 50%),
-                radial-gradient(ellipse at 70% 80%, {astro_color}35 0%, transparent 60%),
-                radial-gradient(circle at 20% 60%, {muse_color}25 0%, transparent 40%),
-                radial-gradient(circle at 80% 40%, {astro_color}30 0%, transparent 45%),
-                /* Deep space base with muse/astro undertones */
-                linear-gradient(135deg, {muse_color}08 0%, {astro_color}12 30%, rgba(5,5,25,0.95) 70%, rgba(0,0,0,0.98) 100%),
-                /* Final dark overlay */
-                radial-gradient(ellipse at center, rgba(10,10,30,0.6) 0%, rgba(0,0,0,0.9) 100%);
+            /* Background that emphasizes the muse color more */
+            background: linear-gradient(135deg,
+                {muse_color}25 0%,
+                rgba(12,12,35,0.97) 40%,
+                rgba(20,20,45,0.95) 100%);
             margin: 0;
             font-family: 'Cormorant Garamond', serif;
-            color: #d1c4e9;
+            color: #FFFFFF;
             min-height: 100vh;
             padding: 20px;
             overflow-x: hidden;
@@ -226,56 +232,15 @@ def get_cosmic_css(
             height: 100%;
             z-index: -1;
             background:
-                /* Enhanced nebula clouds with stronger muse/astro colors */
-                radial-gradient(ellipse 700px 400px at 15% 25%, {muse_color}35 0%, {muse_color}15 30%, transparent 60%),
-                radial-gradient(ellipse 600px 800px at 85% 75%, {astro_color}40 0%, {astro_color}20 25%, transparent 50%),
-                radial-gradient(ellipse 900px 300px at 50% 5%, {astro_color}25 0%, {muse_color}12 40%, transparent 70%),
-                radial-gradient(ellipse 400px 500px at 5% 85%, {muse_color}30 0%, {astro_color}18 35%, transparent 55%),
-                radial-gradient(ellipse 500px 600px at 90% 15%, {astro_color}28 0%, transparent 45%),
-                /* Cosmic energy streams */
-                linear-gradient(45deg, transparent 40%, {muse_color}08 50%, transparent 60%),
-                linear-gradient(-45deg, transparent 35%, {astro_color}10 50%, transparent 65%),
-                /* Distant galaxy glows enhanced with theme colors */
-                radial-gradient(circle 200px at 75% 25%, {astro_color}20 0%, rgba(255,255,255,0.05) 50%, transparent 70%),
-                radial-gradient(circle 150px at 25% 75%, {muse_color}15 0%, rgba(255,255,255,0.04) 50%, transparent 70%),
-                radial-gradient(circle 120px at 60% 60%, {astro_color}12 0%, transparent 70%);
-        }}
-
-        .dust-overlay {{
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background:
-                /* Cosmic dust with color tints */
-                repeating-linear-gradient(45deg,
-                    transparent 0px,
-                    {muse_color}02 0.5px,
-                    rgba(255,255,255,0.008) 1px,
-                    transparent 2px,
-                    transparent 100px),
-                repeating-linear-gradient(-45deg,
-                    transparent 0px,
-                    {astro_color}02 0.5px,
-                    rgba(255,255,255,0.006) 1px,
-                    transparent 2px,
-                    transparent 150px),
-                repeating-linear-gradient(135deg,
-                    transparent 0px,
-                    {muse_color}01 1px,
-                    transparent 2px,
-                    transparent 200px);
-            opacity: 0.7;
-            z-index: -1;
-            pointer-events: none;
+                /* Enhanced muse color gradients */
+                radial-gradient(ellipse at 30% 20%, {muse_color}35 0%, transparent 70%),
+                radial-gradient(ellipse at 10% 40%, {muse_color}25 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 70%, {astro_color}20 0%, transparent 70%);
         }}
 
         @keyframes twinkle {{
             0% {{ opacity: 0.3; transform: scale(0.8); }}
-            25% {{ opacity: 1; transform: scale(1.2); }}
-            50% {{ opacity: 0.6; transform: scale(1); }}
-            75% {{ opacity: 1; transform: scale(1.1); }}
+            50% {{ opacity: 1; transform: scale(1.1); }}
             100% {{ opacity: 0.3; transform: scale(0.8); }}
         }}
 
@@ -285,49 +250,9 @@ def get_cosmic_css(
             100% {{ opacity: 0.5; transform: scale(1); box-shadow: 0 0 5px {muse_color}; }}
         }}
 
-        @keyframes nebula-drift {{
-            0% {{ transform: translateX(0) rotate(0deg); opacity: 0.3; }}
-            50% {{ transform: translateX(15px) rotate(2deg); opacity: 0.5; }}
-            100% {{ transform: translateX(0) rotate(0deg); opacity: 0.3; }}
-        }}
-
-        @keyframes shooting-star-left-to-right {{
-            0% {{ transform: translateX(-100px) translateY(-100px) rotate(-45deg); opacity: 0; }}
-            5% {{ opacity: 1; }}
-            95% {{ opacity: 1; }}
-            100% {{ transform: translateX(calc(100vw + 100px)) translateY(calc(100vh + 100px)) rotate(-45deg); opacity: 0; }}
-        }}
-
-        @keyframes shooting-star-right-to-left {{
-            0% {{ transform: translateX(calc(100vw + 100px)) translateY(-100px) rotate(45deg); opacity: 0; }}
-            5% {{ opacity: 1; }}
-            95% {{ opacity: 1; }}
-            100% {{ transform: translateX(-200px) translateY(calc(100vh + 100px)) rotate(45deg); opacity: 0; }}
-        }}
-
-        @keyframes shooting-star-top-to-bottom {{
-            0% {{ transform: translateY(-100px); opacity: 0; }}
-            10% {{ opacity: 1; }}
-            90% {{ opacity: 1; }}
-            100% {{ transform: translateY(calc(100vh + 100px)); opacity: 0; }}
-        }}
-
-        @keyframes shooting-star-bottom-to-top {{
-            0% {{ transform: translateY(calc(100vh + 100px)); opacity: 0; }}
-            10% {{ opacity: 1; }}
-            90% {{ opacity: 1; }}
-            100% {{ transform: translateY(-100px); opacity: 0; }}
-        }}
-
-        @keyframes float {{
-            0%, 100% {{ transform: translateY(0px) rotate(0deg); }}
-            33% {{ transform: translateY(-8px) rotate(1deg); }}
-            66% {{ transform: translateY(-15px) rotate(-1deg); }}
-        }}
-
-        .star, .shooting-star, .cosmic-dust, .nebula-particle, .pulsar {{
+        .star, .pulsar {{
             position: absolute;
-            z-index: 1000;
+            z-index: -1;  /* Ensure stars stay behind content */
             pointer-events: none;
         }}
 
@@ -335,11 +260,6 @@ def get_cosmic_css(
             background-color: {get_opposite_color(astro_color)};
             border-radius: 50%;
             animation: twinkle 4s infinite ease-in-out;
-        }}
-
-        .star.distant {{
-            background-color: {astro_color}90;
-            box-shadow: 0 0 2px {astro_color}60;
         }}
 
         .star.bright {{
@@ -358,40 +278,30 @@ def get_cosmic_css(
             animation: pulsar 2s infinite ease-in-out;
         }}
 
-        .shooting-star {{
-            background: linear-gradient(90deg, {astro_color}, {muse_color}80, transparent);
-            border-radius: 1px;
-            opacity: 0;
-            box-shadow: 0 0 15px {astro_color}60, 0 0 25px {muse_color}40;
-        }}
-
-        .cosmic-dust {{
-            background-color: rgba(255,255,255,0.4);
-            border-radius: 50%;
-            animation: float 6s ease-in-out infinite;
-        }}
-
-        .nebula-particle {{
-            background: radial-gradient(circle, {muse_color}70 0%, {astro_color}40 40%, transparent 70%);
-            border-radius: 50%;
-            animation: nebula-drift 20s ease-in-out infinite;
-            filter: blur(1px);
+        /* Muse color accent at the bottom */
+        .bottom-accent {{
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, {muse_color}, {muse_color}60, {astro_color}30);
+            z-index: 1;
         }}
     </style>
     """
 
-    stars_html = ""
+    stars_html = '<div class="bottom-accent"></div>'
 
-    # Mixed star types for realistic variety
+    # Star types with more emphasis on colored stars (muse color)
     star_types = [
-        {"class": "star distant", "weight": 0.5},
+        {"class": "star", "weight": 0.5},
         {"class": "star bright", "weight": 0.3},
-        {"class": "star colored", "weight": 0.1},
-        {"class": "pulsar", "weight": 0.02},
+        {"class": "star colored", "weight": 0.2},  # Increased weight for colored stars
     ]
 
-    # Create more varied stars
-    for _ in range(50):
+    # Increased number of stars
+    for _ in range(50):  # Increased from 25 to 40
         star_type = random.choices(
             star_types, weights=[t["weight"] for t in star_types]
         )[0]
@@ -400,13 +310,10 @@ def get_cosmic_css(
         delay = random.uniform(0, 4)
         duration = random.uniform(3, 8)
 
-        if "pulsar" in star_type["class"]:
+        if "bright" in star_type["class"]:
             size = random.uniform(2, 4)
-            duration = random.uniform(1.5, 3)
-        elif "bright" in star_type["class"]:
-            size = random.uniform(2, 6)
         else:
-            size = random.uniform(0.5, 3)
+            size = random.uniform(1, 3)
 
         stars_html += f"""
         <div class="{star_type['class']}" style="
@@ -419,65 +326,19 @@ def get_cosmic_css(
         "></div>
         """
 
-    # Enhanced nebula particles with more muse/astro color influence
-    for _ in range(12):
-        top = random.uniform(0, 100)
-        left = random.uniform(0, 100)
-        size = random.uniform(10, 30)
-        delay = random.uniform(0, 20)
+    # Add two pulsars with muse color
+    for _ in range(5):  # Increased from 1 to 2
+        top = random.uniform(20, 80)
+        left = random.uniform(20, 80)
+        delay = random.uniform(0, 2)
+        size = random.uniform(3, 4)
         stars_html += f"""
-        <div class="nebula-particle" style="
+        <div class="pulsar" style="
             top: {top}%;
             left: {left}%;
+            animation-delay: {delay}s;
             width: {size}px;
             height: {size}px;
-            animation-delay: {delay}s;
-        "></div>
-        """
-
-    # Enhanced cosmic dust
-    for _ in range(7):
-        top = random.uniform(0, 100)
-        left = random.uniform(0, 100)
-        size = random.uniform(0.5, 2)
-        delay = random.uniform(0, 6)
-        stars_html += f"""
-        <div class="cosmic-dust" style="
-            top: {top}%;
-            left: {left}%;
-            width: {size}px;
-            height: {size}px;
-            animation-delay: {delay}s;
-        "></div>
-        """
-
-    # More realistic shooting stars with theme colors
-    directions = [
-        "shooting-star-left-to-right",
-        "shooting-star-right-to-left"
-        # "shooting-star-top-to-bottom",
-        # "shooting-star-bottom-to-top"
-    ]
-
-    for _ in range(1):
-        direction = random.choice(directions)
-        top = random.uniform(-20, 100)
-        left = random.uniform(-20, 100)
-        delay = random.uniform(0, 20)
-        duration = random.uniform(1.5, 3.5)
-        width = random.uniform(40, 80)
-        height = random.uniform(1, 3)
-
-        stars_html += f"""
-        <div class="shooting-star" style="
-            top: {top}%;
-            left: {left}%;
-            width: {width}px;
-            height: {height}px;
-            animation-name: {direction};
-            animation-delay: {delay}s;
-            animation-duration: {duration}s;
-            animation-iteration-count: infinite;
         "></div>
         """
 
@@ -492,16 +353,7 @@ def get_load_cosmic_css(color: str) -> tuple[str, str]:
             50% {{ opacity: 1; transform: scale(1); }}
             100% {{ opacity: 0.2; transform: scale(0.5); }}
         }}
-        @keyframes shooting-star {{
-            0% {{ transform: translateX(-100px) translateY(-100px) rotate(-45deg); opacity: 0; }}
-            10% {{ opacity: 1; }}
-            90% {{ opacity: 1; }}
-            100% {{ transform: translateX(calc(100vw + 100px)) translateY(calc(100vh + 100px)) rotate(-45deg); opacity: 0; }}
-        }}
-        @keyframes float {{
-            0%, 100% {{ transform: translateY(0px); }}
-            50% {{ transform: translateY(-10px); }}
-        }}
+
         .cosmic-loader {{
             position: fixed !important;
             top: 0 !important;
@@ -509,8 +361,13 @@ def get_load_cosmic_css(color: str) -> tuple[str, str]:
             width: 100vw !important;
             height: 100vh !important;
             z-index: 9999 !important;
+            background-color: rgba(12,12,35,0.9) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
             pointer-events: none;
         }}
+
         .star {{
             position: absolute !important;
             background-color: {color} !important;
@@ -521,15 +378,24 @@ def get_load_cosmic_css(color: str) -> tuple[str, str]:
             box-shadow: 0 0 8px 2px {color} !important;
             z-index: 10000 !important;
         }}
+
+        /* This is not needed anymore as we're using a card in the UI code */
+        .loader-text {{
+            display: none;
+        }}
     </style>
     """
+
+    # Only create stars, the loading text is now handled by the UI card
     stars_html = ""
-    for _ in range(50):
+
+    # Add stars for the loading screen
+    for _ in range(20):
         top = random.uniform(0, 100)
         left = random.uniform(0, 100)
         delay = random.uniform(0, 3)
         duration = random.uniform(1, 3)
-        size = random.uniform(2, 5)
+        size = random.uniform(2, 4)
 
         stars_html += f"""
             <div class="star" style="

@@ -9,6 +9,8 @@ services:
     volumes:
       - ./db_files:/db_files
     restart: "no"
+    # Minimal resources for initialization
+    mem_limit: 64M
 
   app:
     build:
@@ -44,17 +46,17 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
     networks:
       - muse-network
-    # Resource limits
+    # Moderate resource limits for 4GB systems
     deploy:
       resources:
         limits:
-          memory: 1G
-        reservations:
           memory: 512M
-    # Health check
+        reservations:
+          memory: 256M
+    # Health check with longer intervals to reduce overhead
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8080/api/health || exit 1"]
-      interval: 30s
+      interval: 60s
       timeout: 10s
       retries: 3
       start_period: 40s
