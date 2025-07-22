@@ -1,0 +1,35 @@
+FROM python:3.11-alpine
+
+# Install required system dependencies for building packages and venv
+RUN apk add --no-cache \
+    bash \
+    tzdata \
+    docker-cli \
+    build-base \
+    libffi-dev \
+    openssl-dev \
+    python3-dev \
+    py3-cryptography \
+    py3-pip \
+    py3-setuptools \
+    py3-wheel
+
+WORKDIR /app
+
+COPY requirements.txt .
+
+# Create venv and install dependencies
+RUN python3 -m venv /venv \
+ && /venv/bin/pip install --upgrade pip \
+ && /venv/bin/pip install -r requirements.txt
+
+COPY . /app
+
+COPY start-cron.sh /start-cron.sh
+RUN chmod +x /start-cron.sh
+
+ENV DB_DIR=/app/db_files
+ENV OPENAI_API_KEY=${OPENAI_API_KEY}
+ENV PYTHONPATH=/app
+
+CMD ["/start-cron.sh"]

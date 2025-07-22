@@ -63,13 +63,14 @@ services:
     command: python app.py
 
   scheduler:
-    image: alpine:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.scheduler
     container_name: muse-fact-scheduler
     restart: unless-stopped
     depends_on:
       - app
     volumes:
-      - ${PWD}:/app:ro
       - ./db_files:/app/db_files:rw
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
@@ -78,28 +79,6 @@ services:
       - PYTHONPATH=/app
     networks:
       - muse-network
-    command: >
-      sh -c '
-        # Install system tools and Python
-        apk add --no-cache python3 py3-pip py3-virtualenv tzdata docker-cli curl bash
-
-        # Create a virtual environment once
-        if [ ! -d "/venv" ]; then
-          python3 -m venv /venv
-        fi
-
-        # Activate the venv and install Python dependencies
-        . /venv/bin/activate && pip install --upgrade pip && pip install -r /app/requirements.txt
-
-        # Write the cron job to run every night at 00:01
-        mkdir -p /etc/crontabs
-        echo "1 0 * * * /venv/bin/python /app/generate_fact.py && docker restart muse-observatory-app" > /etc/crontabs/root
-
-        # Display the crontab and start the cron service
-        echo "Installed crontab:"
-        cat /etc/crontabs/root
-        crond -f -l 8
-      '
 
 networks:
   muse-network:
