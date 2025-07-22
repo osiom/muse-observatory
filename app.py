@@ -14,7 +14,7 @@ from slowapi.errors import RateLimitExceeded
 from starlette.middleware.base import BaseHTTPMiddleware
 from tinydb import Query
 
-from db.db import init_db_pool, search_with_logging
+from db.db import check_db_access, search_with_logging
 from models.schemas import AppInfoResponse
 from observatory import observatory
 from utils.limiter import limiter
@@ -77,12 +77,16 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("🔭 Starting Muse Observatory...")
     try:
-        # Initialize database (create folder if needed)
-        init_db_pool()
-        logger.info("✅ Database initialized")
+        # Check database access using our centralized function
+        if check_db_access():
+            logger.info("✅ Database initialized and accessible")
+        else:
+            logger.error(
+                "❌ Database is not accessible. Application may not function correctly."
+            )
     except Exception as e:
         logger.error(f"❌ Failed to initialize database: {e}")
-        raise
+        logger.warning("Application starting despite database initialization failure")
 
     yield
 

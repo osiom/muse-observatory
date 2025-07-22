@@ -21,7 +21,6 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # TinyDB setup
 DB_DIR = Path(os.getenv("DB_DIR", "db_files"))
 DB_FILE = DB_DIR / "muse_observatory.json"
-DB_DIR.mkdir(exist_ok=True)
 
 # --- OpenAI Token Quota Config ---
 DAILY_TOKEN_QUOTA = 100_000  # Set your daily quota here
@@ -157,28 +156,6 @@ def get_current_token_usage() -> int:
     except Exception as e:
         logger.error(f"Error getting current token usage: {e}")
         return 0
-
-
-def initialize_tables():
-    """Initialize database tables with sample data if needed"""
-    db = get_db()
-    tables = db.tables()
-
-    logger.info(f"Checking tables in database: {tables}")
-
-    # If openai_usage_log table is missing, create it with an empty structure
-    if "openai_usage_log" not in tables:
-        logger.warning("openai_usage_log table not found, initializing...")
-        db.table("openai_usage_log")
-        logger.info("Created openai_usage_log table")
-
-    # If daily_facts table is missing, create it with a test record
-    if "daily_facts" not in tables:
-        logger.warning("daily_facts table not found, initializing with test data")
-        db.table("daily_facts")
-        day_info = get_muse_for_today()
-
-    return False
 
 
 def get_muse_for_today():
@@ -392,19 +369,14 @@ def store_fun_fact(date: datetime, day_info: dict, fact_info: FunFactModel):
 
 def main():
     """Main function to generate and store daily fun fact"""
+    from db.db import check_db_access
+
     current_date = datetime.now()
     logger.info(f"Generating fact for date: {current_date.strftime('%Y-%m-%d')}")
 
-    # Check database status
-    db = get_db()
-    tables = db.tables()
-    logger.info(f"Database contains tables: {tables}")
-
-    # Initialize tables if needed
-    initialized = initialize_tables()
-    if initialized:
-        logger.info("Database tables initialized with test data")
-        # If we just initialized the tables, we can exit as we've already created a fact
+    # Ensure database is accessible
+    if not check_db_access():
+        logger.error("Database is not accessible. Exiting.")
         return
 
     if check_fact_exists(current_date):

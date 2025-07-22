@@ -69,35 +69,27 @@ def get_db() -> TinyDB:
     return _db_instance
 
 
-def init_db_pool():
-    """Initialize database - ensures db directory exists"""
+def check_db_access() -> bool:
+    """
+    Check if the database is accessible with proper permissions.
+
+    Returns:
+        bool: True if database is accessible, False otherwise
+    """
     try:
-        # Create DB directory if it doesn't exist
-        try:
-            DB_DIR.mkdir(exist_ok=True)
-            logger.info(f"Database directory initialized at {DB_DIR}")
-        except PermissionError:
-            logger.error(f"Permission denied: Cannot create directory {DB_DIR}")
-
-        # Initialize DB connection (lazy loading)
+        # This will create DB directory and initialize connection if needed
         db = get_db()
-        logger.info("Database initialized")
 
-        # Log database content info after initialization
-        tables = db.tables()
-        if not tables:
-            logger.warning(
-                "No tables found in the database. This is normal for a fresh installation."
-            )
-        else:
-            logger.info(f"Database contains {len(tables)} tables: {tables}")
-            for table_name in tables:
-                table = db.table(table_name)
-                logger.info(f"Table '{table_name}' has {len(table)} records")
+        # Verify we can write to the database by attempting a no-op
+        test_table = db.table("_test_access")
+        test_id = test_table.insert({"_test": True})
+        test_table.remove(doc_ids=[test_id])
 
+        logger.info("Database access check passed")
+        return True
     except Exception as e:
-        logger.error(f"Error initializing database: {e}")
-        raise
+        logger.error(f"Database access check failed: {e}")
+        return False
 
 
 # Legacy compatibility functions for older code

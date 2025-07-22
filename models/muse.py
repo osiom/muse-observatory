@@ -98,10 +98,6 @@ class Oracle:
             today = datetime.now().strftime("%Y-%m-%d")
             logger.info(f"Looking for fact for date: {today}")
 
-            # Check if the daily_facts table exists
-            tables = db.tables()
-            logger.info(f"Available tables: {tables}")
-
             Facts = Query()
             # Use the new logging helper
             fact = get_with_logging("daily_facts", Facts.date == today)
