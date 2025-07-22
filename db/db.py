@@ -1,46 +1,66 @@
 import os
+from pathlib import Path
+from typing import Optional
 
 from dotenv import load_dotenv
-from psycopg2 import pool
+from tinydb import Query, TinyDB
 
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
 load_dotenv()
 
-connection_pool = None
+# Database file paths
+DB_DIR = Path(os.getenv("DB_DIR", "db_files"))
+DB_FILE = DB_DIR / "muse_observatory.json"
 
-DB_CONFIG = {
-    "dbname": os.getenv("DB_NAME", "muse_observatory"),
-    "user": os.getenv("DB_USER", "museuser"),
-    "password": os.getenv("DB_PASSWORD", "musepassword"),
-    "host": os.getenv("DB_HOST", "localhost"),
-    "port": os.getenv("DB_PORT", "5432"),
-}
+# Ensure DB directory exists
+DB_DIR.mkdir(exist_ok=True)
+
+# Database instances (lazy-loaded)
+_db_instance = None
+
+
+def get_db() -> TinyDB:
+    """Get the TinyDB database instance."""
+    global _db_instance
+    if _db_instance is None:
+        try:
+            _db_instance = TinyDB(DB_FILE)
+            logger.info(f"TinyDB initialized at {DB_FILE}")
+        except Exception as e:
+            logger.error(f"Error initializing TinyDB: {e}")
+            raise
+    return _db_instance
 
 
 def init_db_pool():
-    global connection_pool
+    """Initialize database - ensures db directory exists"""
     try:
-        connection_pool = pool.SimpleConnectionPool(minconn=1, maxconn=10, **DB_CONFIG)
-        logger.info("Database connection pool initialized")
+        # Create DB directory if it doesn't exist
+        DB_DIR.mkdir(exist_ok=True)
+        # Initialize DB connection (lazy loading)
+        _ = get_db()
+        logger.info("Database initialized")
     except Exception as e:
-        logger.error(f"Error initializing connection pool: {e}")
+        logger.error(f"Error initializing database: {e}")
         raise
 
 
 def get_db_connection():
-    if not connection_pool:
-        init_db_pool()
-    return connection_pool.getconn()
+    """Get the database instance (compatibility with old code)"""
+    return get_db()
 
 
-def return_db_connection(conn: str):
-    if connection_pool:
-        connection_pool.putconn(conn)
+def return_db_connection(conn: any) -> None:
+    """No-op function for compatibility with old code"""
+    pass
 
 
 def close_db_pool():
-    if connection_pool:
-        connection_pool.closeall()
-        logger.info("Database connection pool closed")
+    """Close the database connection"""
+    global _db_instance
+    if _db_instance:
+        _db_instance.close()
+        _db_instance = None
+        logger.info("Database connection closed")

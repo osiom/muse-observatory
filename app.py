@@ -26,8 +26,8 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("🔭 Starting Muse Observatory...")
     try:
-        await init_db_pool()
-        logger.info("✅ Database connection pool initialized")
+        init_db_pool()
+        logger.info("✅ Database initialized")
     except Exception as e:
         logger.error(f"❌ Failed to initialize database: {e}")
         raise
@@ -37,7 +37,7 @@ async def lifespan(app: FastAPI):
     # Shutdown
     logger.info("🔄 Shutting down Muse Observatory...")
     try:
-        await close_db_pool()
+        close_db_pool()
         logger.info("✅ Database connections closed")
     except Exception as e:
         logger.error(f"❌ Error during shutdown: {e}")

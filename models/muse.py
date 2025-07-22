@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, List
 
-from psycopg2.extras import RealDictCursor
+from tinydb import Query
 
 from db.db import get_db_connection, return_db_connection
 from models.schemas import InspirationModel, ProjectModel
@@ -91,15 +91,13 @@ class Oracle:
     @staticmethod
     def get_todays_fact() -> Dict[str, Any]:
         """Fetch today's fact from the cosmic database"""
-        conn = None
-        cursor = None
         logger.info("🔮 Fetching today's fact from the cosmic archives...")
         try:
-            conn = get_db_connection()
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            db = get_db_connection()
             today = datetime.now().strftime("%Y-%m-%d")
-            cursor.execute("SELECT * FROM daily_facts WHERE date = %s", (today,))
-            fact = cursor.fetchone()
+            Facts = Query()
+            fact = db.table("daily_facts").get(Facts.date == today)
+
             if fact:
                 logger.info("🌟 Fact found for today — the universe speaks!")
                 return fact
@@ -121,11 +119,6 @@ class Oracle:
                 "question_asked": "Try again later?",
                 "fact_check_link": "#",
             }
-        finally:
-            if cursor:
-                cursor.close()
-            if conn:
-                return_db_connection(conn)
 
     def save_inspiration(self: "Oracle", user_input: str, projects: List[dict]):
         """Save user inspiration and projects to the cosmic ledger"""
@@ -134,61 +127,48 @@ class Oracle:
             user_input=user_input,
             projects=[ProjectModel(**p) for p in projects],
         )
-        conn = None
-        cursor = None
         logger.info(
             f"📝 Saving inspiration from the observer to the cosmic ledger for muse {self.muse_name}..."
         )
         try:
-            conn = get_db_connection()
-            cursor = conn.cursor()
+            db = get_db_connection()
             inspiration_id = str(uuid.uuid4())
+
+            # Insert inspiration
             logger.info("🌌 Inserting inspiration into the database...")
-            cursor.execute(
-                """
-                INSERT INTO inspirations
-                (date, id, day_of_week, social_cause, muse, user_inspiration)
-                VALUES (%s, %s, %s, %s, %s, %s)
-                """,
-                (
-                    datetime.now().date(),
-                    inspiration_id,
-                    datetime.now().strftime("%A"),
-                    self.social_cause,
-                    self.muse_name,
-                    inspiration.user_input,
-                ),
+            db.table("inspirations").insert(
+                {
+                    "date": datetime.now().strftime("%Y-%m-%d"),
+                    "id": inspiration_id,
+                    "day_of_week": datetime.now().strftime("%A"),
+                    "social_cause": self.social_cause,
+                    "muse": self.muse_name,
+                    "user_inspiration": inspiration.user_input,
+                    "created_at": datetime.now().isoformat(),
+                }
             )
+
+            # Insert projects
             logger.info("🌠 Inserting related projects into the cosmic registry...")
             for project in inspiration.projects:
                 logger.info(
                     f"🚀 Inserting project: {project.project_name} (by {project.organization})"
                 )
-                cursor.execute(
-                    """
-                    INSERT INTO projects
-                    (id, project_name, organisation, geographical_level,
-                    link_to_organisation, sk_inspiration)
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                    """,
-                    (
-                        str(uuid.uuid4()),
-                        project.project_name,
-                        project.organization,
-                        project.geographic_level,
-                        project.link_to_organization,
-                        inspiration_id,
-                    ),
+                db.table("projects").insert(
+                    {
+                        "id": str(uuid.uuid4()),
+                        "project_name": project.project_name,
+                        "organisation": project.organization,
+                        "geographical_level": project.geographic_level,
+                        "link_to_organisation": project.link_to_organization,
+                        "sk_inspiration": inspiration_id,
+                        "created_at": datetime.now().isoformat(),
+                    }
                 )
-            conn.commit()
+
             logger.info(
                 f"🌌 Inspiration and projects for muse {self.muse_name} have been committed to the universe!"
             )
         except Exception as e:
             logger.error(f"💥 Save failed in the cosmic ledger: {str(e)}")
             raise
-        finally:
-            if cursor:
-                cursor.close()
-            if conn:
-                return_db_connection(conn)

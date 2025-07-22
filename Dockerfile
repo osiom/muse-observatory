@@ -4,13 +4,16 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
     build-essential \
-    libpq-dev \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
+
+# Create db_files directory
+RUN mkdir -p /app/db_files
 
 # Set timezone as root
 ENV TZ=Europe/Berlin
@@ -31,4 +34,4 @@ ENV PYTHONUNBUFFERED=1 \
 
 EXPOSE 8080
 
-CMD ["uvicorn", "index:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["python", "app.py"]

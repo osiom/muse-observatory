@@ -1,10 +1,11 @@
 import json
 import os
 from datetime import datetime
+from pathlib import Path
 
-import psycopg2
 from dotenv import load_dotenv
 from openai import OpenAI
+from tinydb import Query, TinyDB
 
 from models.schemas import FunFactModel
 from utils.logger import get_logger
@@ -16,14 +17,10 @@ load_dotenv()
 # Connect to OpenAI API
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# Database connection parameters
-DB_CONFIG = {
-    "dbname": os.getenv("DB_NAME", "muse_observatory"),
-    "user": os.getenv("DB_USER", "museuser"),
-    "password": os.getenv("DB_PASSWORD", "musepassword"),
-    "host": os.getenv("DB_HOST", "localhost"),
-    "port": os.getenv("DB_PORT", "5432"),
-}
+# TinyDB setup
+DB_DIR = Path(os.getenv("DB_DIR", "db_files"))
+DB_FILE = DB_DIR / "muse_observatory.json"
+DB_DIR.mkdir(exist_ok=True)
 
 MUSES = {
     0: {
@@ -85,10 +82,9 @@ MUSES = {
 }
 
 
-def get_db_connection():
-    """Create a database connection"""
-    conn = psycopg2.connect(**DB_CONFIG)
-    return conn
+def get_db():
+    """Get database instance"""
+    return TinyDB(DB_FILE)
 
 
 def get_muse_for_today():
@@ -100,19 +96,16 @@ def get_muse_for_today():
 def check_fact_exists(date: datetime):
     """Check if a fact already exists for the given date"""
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT id FROM daily_facts WHERE date = %s", (date.strftime("%Y-%m-%d"),)
-        )
-        return cursor.fetchone() is not None
+        db = get_db()
+        Facts = Query()
+        result = db.table("daily_facts").get(Facts.date == date.strftime("%Y-%m-%d"))
+        return result is not None
     except Exception as e:
         logger.error(f"Error checking for existing fact: {e}")
         return False
     finally:
-        if "conn" in locals():
-            cursor.close()
-            conn.close()
+        if "db" in locals():
+            db.close()
 
 
 def generate_fun_fact(day_info: dict, used_kingdom_life: list) -> FunFactModel:
@@ -179,27 +172,19 @@ def generate_fun_fact(day_info: dict, used_kingdom_life: list) -> FunFactModel:
 def get_used_kingdom_life(muse: str):
     """
     Returns a list of distinct kingdoms_life_subject associated with the given muse.
-    Assumes get_db_connection() is defined and returns a psycopg2 connection.
     """
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
+        db = get_db()
+        Facts = Query()
 
-        query = """
-            SELECT DISTINCT kingdoms_life_subject
-            FROM daily_facts
-            WHERE muse = %s
-            ORDER BY kingdoms_life_subject;
-        """
-        cursor.execute(query, (muse,))
-        results = cursor.fetchall()
+        # Get all facts for this muse
+        results = db.table("daily_facts").search(Facts.muse == muse)
 
-        # Extract values from tuples
-        kingdoms_life_list = [row[0] for row in results]
+        # Extract distinct kingdoms_life_subject values
+        kingdoms_life_set = {item.get("kingdoms_life_subject", "") for item in results}
+        kingdoms_life_list = list(filter(None, kingdoms_life_set))
 
-        cursor.close()
-        conn.close()
-
+        db.close()
         return kingdoms_life_list
 
     except Exception as e:
@@ -209,50 +194,41 @@ def get_used_kingdom_life(muse: str):
 
 def store_fun_fact(date: datetime, day_info: dict, fact_info: FunFactModel):
     """Store the generated fun fact in the database"""
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    db = get_db()
     logger.info(
         f"📝 [DB] Storing fun fact for muse '{day_info['muse']}' on {date.strftime('%Y-%m-%d')}"
     )
+
     # Check if we already have a fact for today
-    cursor.execute(
-        "SELECT id FROM daily_facts WHERE date = %s", (date.strftime("%Y-%m-%d"),)
-    )
-    existing_fact = cursor.fetchone()
+    Facts = Query()
+    existing_fact = db.table("daily_facts").get(Facts.date == date.strftime("%Y-%m-%d"))
 
     if existing_fact:
         logger.info(
             f"Fun fact for {date.strftime('%Y-%m-%d')} already exists. Skipping."
         )
-        cursor.close()
-        conn.close()
+        db.close()
         return
 
-    cursor.execute(
-        """
-    INSERT INTO daily_facts
-    (date, muse, day_of_week, celestial_body, color, note, social_cause, kingdoms_life_subject, fun_fact, question_asked, fact_check_link)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-    """,
-        (
-            date.strftime("%Y-%m-%d"),
-            str(day_info["muse"]),
-            day_info["day_name"],
-            day_info["celestial_body"],
-            day_info["color"],
-            day_info["note"],
-            day_info["cause"],
-            fact_info.kingdoms_life_subject,
-            fact_info.fun_fact,
-            fact_info.question_asked,
-            fact_info.fact_check_link,
-        ),
+    db.table("daily_facts").insert(
+        {
+            "date": date.strftime("%Y-%m-%d"),
+            "muse": str(day_info["muse"]),
+            "day_of_week": day_info["day_name"],
+            "celestial_body": day_info["celestial_body"],
+            "color": day_info["color"],
+            "note": day_info["note"],
+            "social_cause": day_info["cause"],
+            "kingdoms_life_subject": fact_info.kingdoms_life_subject,
+            "fun_fact": fact_info.fun_fact,
+            "question_asked": fact_info.question_asked,
+            "fact_check_link": fact_info.fact_check_link,
+            "created_at": datetime.now().isoformat(),
+        }
     )
 
-    conn.commit()
     logger.info(f"🌠 [DB] Fun fact for muse '{day_info['muse']}' successfully stored!")
-    cursor.close()
-    conn.close()
+    db.close()
 
 
 def main():

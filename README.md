@@ -22,8 +22,8 @@ Muse Observatory is a stargazer’s tool, designed to help you explore the const
 4. **Explore & Connect**: Visit project links, share your ideas, and become part of the cosmic community.
 
 ## 🌠 Tech Constellation
-- **Python** (NiceGUI, psycopg2, dotenv)
-- **PostgreSQL** (for storing cosmic facts and inspirations)
+- **Python** (NiceGUI, TinyDB, dotenv)
+- **TinyDB** (lightweight JSON-based database for storing cosmic facts and inspirations)
 - **Docker** (for easy launch and orbit)
 
 ## 🪐 Getting Started
