@@ -62,35 +62,40 @@ services:
       start_period: 40s
     command: python app.py
 
-  # Daily fact generation scheduler
+  # Daily fact generator using a dedicated cron container
   scheduler:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: alpine:latest
     container_name: muse-fact-scheduler
     restart: unless-stopped
     depends_on:
-      - init-volume
+      - app
     volumes:
-      - ${PWD}:/app${MOUNT_SUFFIX:-}
+      - ${PWD}:/app:ro
       - ./db_files:/app/db_files:rw
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - DB_DIR=/app/db_files
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - PYTHONPATH=/app
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
     networks:
       - muse-network
-    deploy:
-      resources:
-        limits:
-          memory: 256M
     command: >
       sh -c '
-        apk add --no-cache docker-cli
-        echo "Setting up cron job for daily fact generation at midnight"
-        echo "1 0 * * * cd /app && python generate_fact.py && docker compose -f /app/docker-compose.yml restart app" > /etc/crontabs/root
+        # Install required packages
+        apk add --no-cache python3 py3-pip docker-cli tzdata
+
+        # Install Python requirements
+        pip3 install --no-cache-dir -r /app/requirements.txt
+
+        # Create the cron job file
+        mkdir -p /etc/crontabs
+        echo "1 0 * * * cd /app && python3 /app/generate_fact.py && docker restart muse-observatory-app" > /etc/crontabs/root
+
+        # Display the crontab for verification
+        echo "Installed crontab:"
+        cat /etc/crontabs/root
+
+        # Start crond in foreground
         crond -f -l 8
       '
 
