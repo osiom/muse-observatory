@@ -1,38 +1,16 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:15-alpine
-    container_name: muse-observatory-db
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${DB_USER:-museuser}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-musepassword}
-      POSTGRES_DB: ${DB_NAME:-muse_observatory}
-      # Performance tuning
-      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
-    ports:
-      - "${DB_PORT:-5432}:5432"
+  # Volume initialization service to ensure proper permissions
+  init-volume:
+    image: alpine:latest
+    container_name: muse-volume-init
+    command: sh -c "mkdir -p /db_files && chmod -R 777 /db_files && echo 'Volume initialized with proper permissions'"
     volumes:
-      - postgres-data:/var/lib/postgresql/data
-      - ./db/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
-      # Optional: custom PostgreSQL config
-      # - ./db/postgresql.conf:/etc/postgresql/postgresql.conf:ro
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-museuser} -d ${DB_NAME:-muse_observatory}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    networks:
-      - muse-network
-    # Resource limits
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-        reservations:
-          memory: 256M
+      - ./db_files:/db_files
+    restart: "no"
+    # Minimal resources for initialization
+    mem_limit: 64M
 
   app:
     build:
@@ -43,26 +21,21 @@ services:
     container_name: muse-observatory-app
     restart: unless-stopped
     depends_on:
-      postgres:
-        condition: service_healthy
+      - init-volume
     ports:
       - "${APP_PORT:-8080}:8080"
     volumes:
-      # Only mount source code in development
+      # Mount source code in development
       - ${PWD}:/app${MOUNT_SUFFIX:-}
+      # Mount local db_files directory directly
+      - ./db_files:/app/db_files:rw
     environment:
-      # Database configuration
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_NAME=${DB_NAME:-muse_observatory}
-      - DB_USER=${DB_USER:-museuser}
-      - DB_PASSWORD=${DB_PASSWORD:-musepassword}
-
       # Application configuration
       - HOST=0.0.0.0
       - PORT=8080
       - ENVIRONMENT=${ENVIRONMENT:-production}
       - DEBUG=${DEBUG:-false}
+      - DB_DIR=/app/db_files
 
       # Python configuration
       - PYTHONUNBUFFERED=1
@@ -73,28 +46,60 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
     networks:
       - muse-network
-    # Resource limits
+    # Moderate resource limits for 4GB systems
     deploy:
       resources:
         limits:
-          memory: 1G
-        reservations:
           memory: 512M
-    # Health check
+        reservations:
+          memory: 256M
+    # Health check with longer intervals to reduce overhead
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8080/api/health || exit 1"]
-      interval: 30s
+      interval: 60s
       timeout: 10s
       retries: 3
       start_period: 40s
     command: python app.py
 
+  # Daily fact generator using a dedicated cron container
+  scheduler:
+    image: alpine:latest
+    container_name: muse-fact-scheduler
+    restart: unless-stopped
+    depends_on:
+      - app
+    volumes:
+      - ${PWD}:/app:ro
+      - ./db_files:/app/db_files:rw
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - DB_DIR=/app/db_files
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - PYTHONPATH=/app
+    networks:
+      - muse-network
+    command: >
+      sh -c '
+        # Install required packages
+        apk add --no-cache python3 py3-pip docker-cli tzdata
+
+        # Install Python requirements
+        pip3 install --no-cache-dir -r /app/requirements.txt
+
+        # Create the cron job file
+        mkdir -p /etc/crontabs
+        echo "1 0 * * * cd /app && python3 /app/generate_fact.py && docker restart muse-observatory-app" > /etc/crontabs/root
+
+        # Display the crontab for verification
+        echo "Installed crontab:"
+        cat /etc/crontabs/root
+
+        # Start crond in foreground
+        crond -f -l 8
+      '
+
 networks:
   muse-network:
     driver: bridge
     name: muse_observatory_network
-
-volumes:
-  postgres-data:
-    name: muse_observatory_data
-    driver: local

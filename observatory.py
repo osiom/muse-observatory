@@ -124,21 +124,13 @@ async def handle_share(oracle_day: Oracle, user_input: str, share_button: ui.but
     logger.info(
         f"✨ User is sharing inspiration with muse '{oracle_day.muse_name}'. Input: '{user_input[:60]}...'"
     )
-    # Create cosmic loader with transparent background
+    # Create cosmic loader with solid black background
     with ui.column().classes(
-        "fixed inset-0 items-center justify-center bg-black bg-opacity-30"
+        "fixed inset-0 flex items-center justify-center"
     ) as loader:
         loader.style(
-            "z-index: 9999; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;"
+            "z-index: 9999; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; background-color: #000000;"
         )
-
-        # Loading message with higher z-index than stars
-        with ui.column().classes(
-            f"relative z-50 bg-{oracle_day.astro_color} bg-opacity-70 p-8 rounded-xl"
-        ):
-            ui.label("Capting signals... 📡").classes(
-                "text-3xl font-bold text-white mb-4"
-            )
 
         # Add HTML/CSS for animated cosmic background
         loader_cosmic_css = get_text_css(oracle_day.color)
@@ -150,6 +142,13 @@ async def handle_share(oracle_day: Oracle, user_input: str, share_button: ui.but
         cosmic_loader_css, stars = get_load_cosmic_css(oracle_day.color)
         ui.html(cosmic_loader_css)
         ui.html(stars)
+
+        # Loading message with higher z-index than stars - positioned in the absolute center
+        # Using black background with no border
+        with ui.card().classes("z-[10002] p-6 rounded-xl text-center").style(
+            f"background-color: #000000; border: 0px solid {oracle_day.color}80; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"
+        ):
+            ui.label("Capting signals... 📡").classes("text-2xl font-bold text-white")
 
     try:
         # Get project recommendations

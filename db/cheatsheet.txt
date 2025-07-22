@@ -1,12 +1,97 @@
-# tables
-\dt
-# table
-\d <table-name>
+# TinyDB Cheatsheet for Muse Observatory
 
-# check structure table
-\d daily_facts
-\d inspirations
+## Basic Usage
 
-docker exec -it muse-observatory-db psql -U museuser -d muse_observatory
+# Import
+from tinydb import TinyDB, Query
 
-docker-compose build && docker-compose up
+# Get database instance
+db = TinyDB('db_files/muse_observatory.json')
+
+# Access a table
+facts_table = db.table('daily_facts')
+inspirations_table = db.table('inspirations')
+projects_table = db.table('projects')
+
+## Querying Data
+
+# Simple query - get all records
+all_facts = facts_table.all()
+
+# Query with conditions
+User = Query()
+today_fact = facts_table.get(User.date == '2023-06-01')
+muse_facts = facts_table.search(User.muse == 'lunes')
+
+# Multiple conditions
+combined_query = facts_table.search((User.muse == 'lunes') & (User.date > '2023-01-01'))
+
+## Inserting Data
+
+# Insert a single record
+facts_table.insert({
+    'date': '2023-06-01',
+    'muse': 'lunes',
+    'day_of_week': 'Monday',
+    'celestial_body': 'Moon',
+    'color': 'Blue',
+    'note': 'C',
+    'social_cause': 'Education',
+    'kingdoms_life_subject': 'Marine Life',
+    'fun_fact': 'The Moon is moving away from Earth at a rate of 3.8 cm per year.',
+    'question_asked': 'How does the Moon inspire you?',
+    'fact_check_link': 'https://example.com/moon-fact',
+    'created_at': '2023-06-01T12:00:00'
+})
+
+## Updating Data
+
+# Update a single record
+facts_table.update({'fun_fact': 'Updated fact'}, User.date == '2023-06-01')
+
+# Update multiple records
+facts_table.update({'verified': True}, User.muse == 'lunes')
+
+## Removing Data
+
+# Remove a single record
+facts_table.remove(User.date == '2023-06-01')
+
+# Remove multiple records
+facts_table.remove(User.muse == 'lunes')
+
+# Remove all records
+facts_table.truncate()
+
+## Advanced Queries
+
+# Custom test functions
+def is_recent(date):
+    from datetime import datetime
+    record_date = datetime.strptime(date, '%Y-%m-%d')
+    return (datetime.now() - record_date).days < 30
+
+recent_facts = facts_table.search(User.date.test(is_recent))
+
+# Array contains
+projects_with_tag = projects_table.search(User.tags.any(['education']))
+
+# Searching nested structures
+nested_search = projects_table.search(User.meta.views > 100)
+
+## Useful Tips
+
+# Count records
+count = len(facts_table)
+
+# Check if records exist
+exists = facts_table.contains(User.date == '2023-06-01')
+
+# Get document IDs
+doc_ids = [doc.doc_id for doc in facts_table.all()]
+
+# Upsert (insert or update)
+facts_table.upsert({'date': '2023-06-01', 'updated': True}, User.date == '2023-06-01')
+
+# Close database when done
+db.close()

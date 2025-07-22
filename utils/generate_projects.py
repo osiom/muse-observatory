@@ -5,8 +5,9 @@ from datetime import datetime
 
 from dotenv import load_dotenv
 from openai import AsyncOpenAI  # Changed to async
+from tinydb import Query
 
-from db.db import get_db_connection, return_db_connection
+from db.db import get_db, insert_with_logging, search_with_logging
 from models.muse import Oracle
 from utils.logger import get_logger
 
@@ -24,85 +25,76 @@ DAILY_TOKEN_QUOTA = 100_000  # Set your daily quota here
 
 
 async def check_and_increment_token_quota(tokens_used: int) -> bool:
-    """Check if the daily quota is exceeded and increment the token count atomically."""
-    today = datetime.now().date()
-    conn = get_db_connection()
-    try:
-        with conn:
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    "SELECT tokens_used FROM openai_token_usage WHERE usage_date = %s FOR UPDATE",
-                    (today,),
-                )
-                row = cursor.fetchone()
-                if row:
-                    total = row[0] + tokens_used
-                    if total > DAILY_TOKEN_QUOTA:
-                        logger.warning(
-                            f"🚫 [Quota] Attempted to use {tokens_used} tokens, but quota ({DAILY_TOKEN_QUOTA}) would be exceeded. Current: {row[0]}"
-                        )
-                        return False
-                    cursor.execute(
-                        "UPDATE openai_token_usage SET tokens_used = %s WHERE usage_date = %s",
-                        (total, today),
-                    )
-                    logger.info(
-                        f"🔄 [Quota] Updated token usage for {today}: {row[0]} + {tokens_used} = {total}"
-                    )
-                else:
-                    if tokens_used > DAILY_TOKEN_QUOTA:
-                        logger.warning(
-                            f"🚫 [Quota] Attempted to use {tokens_used} tokens, but quota ({DAILY_TOKEN_QUOTA}) would be exceeded. No previous usage today."
-                        )
-                        return False
-                    cursor.execute(
-                        "INSERT INTO openai_token_usage (usage_date, tokens_used) VALUES (%s, %s)",
-                        (today, tokens_used),
-                    )
-                    logger.info(
-                        f"✨ [Quota] Inserted new token usage for {today}: {tokens_used} tokens."
-                    )
+    """
+    Check if the daily quota is exceeded based on the usage log.
+    No need to update a separate table as we'll calculate totals from the log.
+    """
+    if tokens_used <= 0:
         return True
-    finally:
-        return_db_connection(conn)
+
+    current_usage = await get_current_token_usage()
+    total = current_usage + tokens_used
+
+    if total > DAILY_TOKEN_QUOTA:
+        logger.warning(
+            f"🚫 [Quota] Attempted to use {tokens_used} tokens, but quota ({DAILY_TOKEN_QUOTA}) would be exceeded. Current: {current_usage}"
+        )
+        return False
+
+    logger.info(
+        f"🔄 [Quota] Token usage within limits: {current_usage} + {tokens_used} = {total}/{DAILY_TOKEN_QUOTA}"
+    )
+    return True
 
 
 async def log_openai_usage(
     endpoint: str, tokens_used: int, model: str, status: str, error: str = None
 ):
     """Log OpenAI API usage for monitoring and auditing."""
-    conn = get_db_connection()
     try:
-        with conn:
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    """
-                    INSERT INTO openai_usage_log (endpoint, tokens_used, model, status, error)
-                    VALUES (%s, %s, %s, %s, %s)
-                    """,
-                    (endpoint, tokens_used, model, status, error),
-                )
+        # Insert a log entry with timestamp including date for easy filtering by date
+        usage_data = {
+            "timestamp": datetime.now().isoformat(),
+            "date": datetime.now().strftime("%Y-%m-%d"),
+            "endpoint": endpoint,
+            "tokens_used": tokens_used,
+            "model": model,
+            "status": status,
+            "error": error,
+        }
+
+        # Use the helper function to insert with logging
+        insert_with_logging("openai_usage_log", usage_data)
+
+        logger.info(
+            f"Logged OpenAI API usage: {endpoint}, {tokens_used} tokens, status: {status}"
+        )
     except Exception as e:
         logger.error(f"Failed to log OpenAI usage: {e}")
-    finally:
-        return_db_connection(conn)
 
 
 async def get_current_token_usage() -> int:
-    """Get the current total tokens used today."""
-    today = datetime.now().date()
-    conn = get_db_connection()
+    """
+    Get the current total tokens used today from the usage log.
+    This replaces the need for a separate token_usage table.
+    """
     try:
-        with conn:
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    "SELECT tokens_used FROM openai_token_usage WHERE usage_date = %s",
-                    (today,),
-                )
-                row = cursor.fetchone()
-                return row[0] if row else 0
-    finally:
-        return_db_connection(conn)
+        today = datetime.now().strftime("%Y-%m-%d")
+
+        # Use the search helper to find all logs for today
+        Usage = Query()
+        logs = search_with_logging("openai_usage_log", Usage.date == today)
+
+        # Sum tokens from successful calls
+        total = sum(
+            log.get("tokens_used", 0) for log in logs if log.get("status") == "success"
+        )
+
+        logger.info(f"Current token usage for today ({today}): {total}")
+        return total
+    except Exception as e:
+        logger.error(f"Error getting current token usage: {e}")
+        return 0
 
 
 async def get_project_response(oracle_day: Oracle, user_paragraph: str):  # Added async
