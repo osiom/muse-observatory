@@ -212,9 +212,9 @@ def get_cosmic_css(
         body {{
             /* Background that emphasizes the muse color more */
             background: linear-gradient(135deg,
-                {muse_color}25 0%,
-                rgba(12,12,35,0.97) 40%,
-                rgba(20,20,45,0.95) 100%);
+                {muse_color}45 0%,
+                rgba(0,0,0,0.85) 60%,
+                rgba(0,0,0,0.97) 100%);
             margin: 0;
             font-family: 'Cormorant Garamond', serif;
             color: #FFFFFF;
@@ -233,9 +233,10 @@ def get_cosmic_css(
             z-index: -1;
             background:
                 /* Enhanced muse color gradients */
-                radial-gradient(ellipse at 30% 20%, {muse_color}35 0%, transparent 70%),
-                radial-gradient(ellipse at 10% 40%, {muse_color}25 0%, transparent 60%),
-                radial-gradient(ellipse at 80% 70%, {astro_color}20 0%, transparent 70%);
+                radial-gradient(ellipse at 10% 30%, {muse_color}50 0%, transparent 70%),
+                radial-gradient(ellipse at 20% 20%, {muse_color}35 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 70%, {astro_color}30 0%, transparent 70%),
+                linear-gradient(to bottom, {muse_color}20, transparent);
         }}
 
         @keyframes twinkle {{

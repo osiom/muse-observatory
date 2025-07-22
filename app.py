@@ -2,21 +2,72 @@ import asyncio
 import base64
 import os
 from contextlib import asynccontextmanager
+from datetime import datetime, timedelta
+from typing import Any, Callable, Dict, List, Optional, Union
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from nicegui import app as nicegui_app
 from nicegui import ui
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from starlette.middleware.base import BaseHTTPMiddleware
+from tinydb import Query
 
-from db.db import init_db_pool
+from db.db import init_db_pool, search_with_logging
 from models.schemas import AppInfoResponse
 from observatory import observatory
 from utils.limiter import limiter
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
+
+
+class LocalOnlyMiddleware(BaseHTTPMiddleware):
+    """Middleware to restrict API access to local requests only."""
+
+    def __init__(
+        self: "LocalOnlyMiddleware",
+        app: FastAPI,
+        local_prefixes: Optional[List[str]] = None,
+    ) -> None:
+        super().__init__(app)
+        self.local_prefixes = local_prefixes or ["/api/"]
+        logger.info(
+            f"🔒 Restricting access to {self.local_prefixes} for local requests only"
+        )
+
+    async def dispatch(
+        self: "LocalOnlyMiddleware", request: Request, call_next: Callable
+    ) -> JSONResponse:
+        # Get client IP
+        client_host = request.client.host if request.client else None
+        path = request.url.path
+
+        # Check if path starts with any of the protected prefixes
+        is_protected_path = any(
+            path.startswith(prefix) for prefix in self.local_prefixes
+        )
+
+        # Allow access only if not protected or client is local
+        if is_protected_path and not self._is_local_request(client_host):
+            logger.warning(f"🚫 Blocked non-local access to {path} from {client_host}")
+            return JSONResponse(
+                status_code=403,
+                content={
+                    "error": "Access denied: API endpoints can only be accessed from localhost"
+                },
+            )
+
+        # Continue processing the request
+        return await call_next(request)
+
+    def _is_local_request(
+        self: "LocalOnlyMiddleware", client_host: Optional[str]
+    ) -> bool:
+        """Check if the request is coming from the local machine."""
+        local_ips = {"localhost", "127.0.0.1", "::1", "0.0.0.0", None}
+        return client_host in local_ips
 
 
 # Application lifespan manager - simplified
@@ -44,6 +95,10 @@ nicegui_app.state.limiter = limiter
 nicegui_app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # --- End Rate Limiting Setup ---
 
+# --- Apply Local Only Middleware ---
+nicegui_app.add_middleware(LocalOnlyMiddleware)
+# --- End Apply Local Only Middleware ---
+
 
 # Health check endpoint
 @nicegui_app.get("/api/health")
@@ -63,6 +118,69 @@ async def app_info(request: Request):
         description="Looking at the stars in the universe",
         environment=os.getenv("ENVIRONMENT", "production"),
     )
+
+
+@nicegui_app.get("/api/tokens")
+@limiter.limit("10/minute")
+async def token_usage_stats(request: Request):
+    """Get token usage statistics per day."""
+    logger.info("🔍 Retrieving token usage statistics")
+
+    # Default to the last 7 days if not specified
+    days = 7
+
+    try:
+        # Calculate date range
+        today = datetime.now().strftime("%Y-%m-%d")
+        dates = []
+        for i in range(days):
+            date = (datetime.now() - timedelta(days=i)).strftime("%Y-%m-%d")
+            dates.append(date)
+
+        Usage = Query()
+        usage_stats = {}
+
+        # Get usage for each date
+        for date in dates:
+            logs = search_with_logging("openai_usage_log", Usage.date == date)
+
+            # Sum successful API calls
+            total_tokens = sum(
+                log.get("tokens_used", 0)
+                for log in logs
+                if log.get("status") == "success"
+            )
+
+            # Get breakdown by endpoint
+            endpoint_usage = {}
+            for log in logs:
+                if log.get("status") == "success":
+                    endpoint = log.get("endpoint", "unknown")
+                    tokens = log.get("tokens_used", 0)
+                    endpoint_usage[endpoint] = endpoint_usage.get(endpoint, 0) + tokens
+
+            # Add to results
+            usage_stats[date] = {
+                "total_tokens": total_tokens,
+                "endpoints": endpoint_usage,
+            }
+
+        logger.info(f"✅ Retrieved token usage for {len(dates)} days")
+        return JSONResponse(
+            content={
+                "usage_per_day": usage_stats,
+                "total_tokens": sum(
+                    day_stats["total_tokens"] for day_stats in usage_stats.values()
+                ),
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"❌ Error retrieving token usage: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"Failed to retrieve token usage: {str(e)}"},
+        )
 
 
 @nicegui_app.get("/api/stats")

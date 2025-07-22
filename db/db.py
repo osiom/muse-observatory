@@ -106,11 +106,6 @@ def get_db_connection():
     return get_db()
 
 
-def return_db_connection(conn: TinyDB) -> None:
-    """No-op function for compatibility with old code"""
-    pass
-
-
 # Helper functions for data operations with logging
 def insert_with_logging(table_name: str, data: dict) -> int:
     """Insert data into a table with detailed logging"""
