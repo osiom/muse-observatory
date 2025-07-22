@@ -362,7 +362,7 @@ def get_load_cosmic_css(color: str) -> tuple[str, str]:
             width: 100vw !important;
             height: 100vh !important;
             z-index: 9999 !important;
-            background-color: rgba(12,12,35,0.9) !important;
+            background-color: #000000 !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
