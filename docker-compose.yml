@@ -50,9 +50,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 1.5G
         reservations:
-          memory: 256M
+          memory: 512M
     # Health check with longer intervals to reduce overhead
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8080/api/health || exit 1"]
@@ -62,7 +62,6 @@ services:
       start_period: 40s
     command: python app.py
 
-  # Daily fact generator using a dedicated cron container
   scheduler:
     image: alpine:latest
     container_name: muse-fact-scheduler
@@ -81,21 +80,24 @@ services:
       - muse-network
     command: >
       sh -c '
-        # Install required packages
-        apk add --no-cache python3 py3-pip docker-cli tzdata
+        # Install system tools and Python
+        apk add --no-cache python3 py3-pip py3-virtualenv tzdata docker-cli curl bash
 
-        # Install Python requirements
-        pip3 install --no-cache-dir -r /app/requirements.txt
+        # Create a virtual environment once
+        if [ ! -d "/venv" ]; then
+          python3 -m venv /venv
+        fi
 
-        # Create the cron job file
+        # Activate the venv and install Python dependencies
+        . /venv/bin/activate && pip install --upgrade pip && pip install -r /app/requirements.txt
+
+        # Write the cron job to run every night at 00:01
         mkdir -p /etc/crontabs
-        echo "1 0 * * * cd /app && python3 /app/generate_fact.py && docker restart muse-observatory-app" > /etc/crontabs/root
+        echo "1 0 * * * /venv/bin/python /app/generate_fact.py && docker restart muse-observatory-app" > /etc/crontabs/root
 
-        # Display the crontab for verification
+        # Display the crontab and start the cron service
         echo "Installed crontab:"
         cat /etc/crontabs/root
-
-        # Start crond in foreground
         crond -f -l 8
       '
 
