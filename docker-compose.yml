@@ -5,11 +5,11 @@ services:
   init-volume:
     image: alpine:latest
     container_name: muse-volume-init
-    command: sh -c "mkdir -p /db_files && chmod -R 777 /db_files && echo 'Volume initialized with proper permissions'"
+    command: sh -c "mkdir -p /db_files /logs && chmod -R 777 /db_files /logs && echo 'Volumes initialized with proper permissions'"
     volumes:
       - ./db_files:/db_files
+      - ./logs:/logs  # Add this line
     restart: "no"
-    # Minimal resources for initialization
     mem_limit: 64M
 
   app:
@@ -29,6 +29,7 @@ services:
       - ${PWD}:/app${MOUNT_SUFFIX:-}
       # Mount local db_files directory directly
       - ./db_files:/app/db_files:rw
+      - ./logs:/app/logs:rw
     environment:
       # Application configuration
       - HOST=0.0.0.0
@@ -73,10 +74,25 @@ services:
     volumes:
       - ./db_files:/app/db_files:rw
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./logs:/app/logs:rw
     environment:
       - DB_DIR=/app/db_files
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - PYTHONPATH=/app
+    networks:
+      - muse-network
+
+  nginx:
+    image: nginx:stable
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - /etc/ssl/certs/cloudflare.crt:/etc/ssl/certs/cloudflare.crt:ro
+      - /etc/ssl/private/cloudflare.key:/etc/ssl/private/cloudflare.key:ro
+    depends_on:
+      - app
     networks:
       - muse-network
 

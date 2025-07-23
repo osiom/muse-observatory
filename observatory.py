@@ -227,7 +227,7 @@ def observatory(request: Request):
             ui.label(oracle_day.fun_fact).classes("fun-fact text-center").style(
                 "margin-top: 0px; margin-bottom: 2px;"
             )
-            ui.link("Source", oracle_day.fact_check_link).classes(
+            ui.link("Source", oracle_day.fact_check_link, True).classes(
                 "source-link text-center"
             ).style("margin-top: 0px; margin-bottom: 4px;")
 

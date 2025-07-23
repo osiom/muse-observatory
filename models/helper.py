@@ -59,10 +59,6 @@ class HelpButton:
                             <strong>🌟 Building together:</strong><br>
                             Projects are added to our constellation, creating a shared resource for future collaborations.
                         </p>
-
-                        <p style="margin-bottom: 0.5rem; font-style: italic; color: rgba(255,255,255,0.7); font-size: 0.8rem;">
-                            ☁️ Self-hosted experience — no clouds in our cosmo :)
-                        </p>
                     </div>
                 """
                 )
