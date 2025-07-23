@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from typing import Any, Callable, Dict, List, Optional, Union
 
 from fastapi import Depends, FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 from nicegui import app as nicegui_app
 from nicegui import ui
 from slowapi import _rate_limit_exceeded_handler
@@ -103,6 +103,11 @@ nicegui_app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handle
 nicegui_app.add_middleware(LocalOnlyMiddleware)
 # --- End Apply Local Only Middleware ---
 
+@nicegui_app.exception_handler(429)
+async def ratelimit_handler(request, exc):
+    with open("./limited.html", "r") as f:
+        html_content = f.read()
+    return HTMLResponse(content=html_content, status_code=429)
 
 # Health check endpoint
 @nicegui_app.get("/api/health")

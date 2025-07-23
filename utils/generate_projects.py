@@ -120,7 +120,7 @@ async def get_project_response(oracle_day: Oracle, user_paragraph: str):  # Adde
     Each project must:
     - Be real and verifiable
     - Include name, organization, geographic level (global/national/regional/local)
-    - Have a working URL
+    - Have a working URL for the organization specific you found
     - Relate to both the user's ideas and the muse's theme
 
     Return only valid JSON, without any Markdown formatting or triple backticks, format with schema:

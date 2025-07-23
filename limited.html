@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muse-observatory - Connection Closed</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>muse-observatory - connection closed</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔭</text></svg>">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=swap');
@@ -18,6 +18,26 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      position: relative;
+      color: white;
+      font-family: 'Cormorant Garamond', serif;
+    }
+
+    /* Logo container fixed at top center */
+    .logo-container {
+      position: fixed;
+      top: 20px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .logo-img {
+      width: 60px;
+      height: 60px;
+      object-fit: contain;
     }
 
     .noise {
@@ -35,16 +55,14 @@
       padding: 2rem;
       width: 400px;
       text-align: center;
-      margin-bottom: 1rem;
+      margin-bottom: 2rem;
+      margin-top: 100px; /* leave space for fixed logo */
     }
 
     .closed-text {
-      font-family: 'Cormorant Garamond', serif;
       font-size: clamp(1.2rem, 4vw, 1.8rem);
-      color: white;
       display: inline-block;
       position: relative;
-      margin-bottom: 1rem;
     }
 
     .closed-text::after {
@@ -56,12 +74,14 @@
     }
 
     .expired-text {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.1rem;
-      color: white;
-      margin-top: 1rem;
+      font-size: clamp(1rem, 3vw, 1.1rem);
       opacity: 0.9;
       line-height: 1.4;
+      margin-top: 1rem;
+      text-align: center;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     @keyframes blink {
@@ -102,18 +122,28 @@
 </head>
 <body>
   <div class="noise"></div>
+
+  <!-- Fixed logo at top center -->
+  <div class="logo-container">
+    <a href="https://cocoex.xyz" target="_blank" rel="noopener noreferrer">
+      <img src="img/logo.png" alt="Cocoex Logo" class="logo-img" />
+    </a>
+  </div>
+
   <div class="terminal">
     <div class="closed-text">
-      Closed connection<span class="dots"><span>.</span><span>.</span><span>.</span></span>
+      closed connection<span class="dots"><span>.</span><span>.</span><span>.</span></span>
     </div>
   </div>
+
   <div class="expired-text">
-    login expired - try again tomorrow
+    max logins reached - try again tomorrow
   </div>
+
   <div class="telescope">🔭</div>
 
   <audio autoplay loop>
-    <source src="https://cdn.pixabay.com/audio/2022/03/15/audio_5ba25a5f81.mp3" type="audio/mpeg">
+    <source src="https://cdn.pixabay.com/audio/2022/03/15/audio_5ba25a5f81.mp3" type="audio/mpeg" />
     Your browser does not support the audio element.
   </audio>
 </body>
