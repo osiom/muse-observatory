@@ -2,8 +2,9 @@ from nicegui import ui
 
 
 class HelpButton:
-    def __init__(self: "HelpButton", color: str = "black"):
+    def __init__(self: "HelpButton", color: str = "black", auto_open: bool = False):
         self.color = color
+        self.auto_open = auto_open
         self.instructions_dialog = None
         self.create_dialog()
 
@@ -24,7 +25,7 @@ class HelpButton:
                     f"""
                     <div style="
                         text-align: center;
-                        margin-bottom: 0.5rem;
+                        margin-bottom: -0.25rem;
                         color: {self.color};
                         text-shadow: 0 0 10px rgba(255,255,255,0.3);
                     ">
@@ -42,22 +43,23 @@ class HelpButton:
                         line-height: 1.4;
                         color: rgba(255,255,255,0.9);
                         text-align: left;
-                        font-size: 0.85rem;
+                        font-size: 0.95rem;
+                        font-style: normal;
+                        margin-top: 0;
+                        padding-top: 0;
                     ">
-                        <p style="margin-bottom: 0.75rem;">
-                            Welcome to Muse Observatory! Each day brings a new <strong>Muse</strong> with unique energy and theme.
+                        <p style="margin-top: 0; margin-bottom: 0.75rem;">
+                            Welcome to Muse Observatory! Each day introduces a new <strong>Muse</strong> with its own unique energy and theme. These Muses are narratives built on top of the <a href="https://cocoex.xyz" target="_blank" rel="noopener noreferrer">cocoex comet-collab</a>. Each Muse is connected to a specific <a href="https://sdgs.un.org/goals" target="_blank" rel="noopener noreferrer">Sustainable Development Goal (SDG)</a> and a related social cause.
                         </p>
-
-                        <p style="margin-bottom: 0.75rem;">
+                        <p style="margin-bottom: 0.75rem; font-style: normal;">
                             <strong>🌌 How it works:</strong><br>
-                            • Get inspired with a fun-fact<br>
-                            • Share your thoughts with the Muse<br>
-                            • Discover matching real-world projects
+                            • Get inspired by a fun fact about an organism from the kingdoms of life, showing how nature can spark ideas and synergies for real-world human applications.<br>
+                            • Share your thoughts and reflections about what the Muse of the day inspired in you.<br>
+                            • Once inspired, the Muse will connect you with real-world projects or NGOs aligned with your vision — because we're never alone in this journey!
                         </p>
-
-                        <p style="margin-bottom: 0.75rem;">
+                        <p style="margin-bottom: 0.75rem; font-style: normal;">
                             <strong>🌟 Building together:</strong><br>
-                            Projects are added to our constellation, creating a shared resource for future collaborations.
+                            Finally, every inspiration and project discovered will be added to the <a href="https://cocoex.xyz" target="_blank" rel="noopener noreferrer">cocoex register</a>, helping us build a collective database of initiatives and ideas — from the people, for the people. :)
                         </p>
                     </div>
                 """
@@ -81,50 +83,53 @@ class HelpButton:
                 )
 
     def render(self: "HelpButton"):
-        """Render the help button as simple text in the top left corner"""
+        """Render the help button as a circular button with white question mark"""
         help_button = (
             ui.button("?", on_click=self.instructions_dialog.open)
             .classes("fixed top-4 left-4 z-50")
             .style(
-                "background: transparent !important; "
-                f"color: {self.color}; "
+                f"background: {self.color} !important; "
+                "color: white !important; "
                 "border: none !important; "
-                "box-shadow: none !important; "
-                "font-size: 24px; "
+                "border-radius: 50% !important; "
+                "box-shadow: 0 2px 8px rgba(0,0,0,0.4), 0 0 2px rgba(255,255,255,0.3) !important; "
+                "font-size: 18px; "
                 "font-weight: bold; "
-                "padding: 8px; "
-                "min-width: auto; "
-                "width: auto; "
-                "height: auto; "
+                "padding: 0; "
+                "min-width: 30px; "
+                "width: 30px; "
+                "height: 30px; "
+                "display: flex; "
+                "align-items: center; "
+                "justify-content: center; "
                 "cursor: pointer; "
-                "transition: opacity 0.3s ease;"
+                "transition: transform 0.3s ease, box-shadow 0.3s ease;"
                 "z-index: 9999 !important; "
             )
         )
 
-        # Add simple hover effect and remove any default button styling
+        # Add hover effect and ensure consistent styling
         ui.add_head_html(
             """
             <style>
-        .fixed.top-4.left-4.z-50 {{
+        .fixed.top-4.left-4.z-50 {
             z-index: 9999 !important;
             position: fixed !important;
-            background: transparent !important;
-            border: none !important;
-            box-shadow: none !important;
-        }}
+        }
 
-        .fixed.top-4.left-4.z-50:hover {{
-            opacity: 0.7 !important;
-            background: transparent !important;
-            border: none !important;
-            box-shadow: none !important;
-        }}
+        .fixed.top-4.left-4.z-50:hover {
+            transform: scale(1.1) !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4), 0 0 4px rgba(255,255,255,0.5) !important;
+        }
         </style>
         """
         )
 
+        # Auto-open dialog if enabled
+        if self.auto_open:
+            ui.timer(0.5, lambda: self.instructions_dialog.open(), once=True)
+
 
 # Factory function for easy use
-def create_help_button(color: str = "white") -> HelpButton:
-    return HelpButton(color)
+def create_help_button(color: str = "white", auto_open: bool = False) -> HelpButton:
+    return HelpButton(color, auto_open)

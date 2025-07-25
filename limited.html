@@ -72,12 +72,13 @@
       right: -10px;
       animation: blink 0.75s step-end infinite;
     }
-
     .expired-text {
-      font-size: clamp(1rem, 3vw, 1.1rem);
-      opacity: 0.9;
-      line-height: 1.4;
-      margin-top: 1rem;
+      color: white;
+      font-size: clamp(1rem, 3vw, 1.5rem);
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 600;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+      margin-top: 1.5rem;
       text-align: center;
       max-width: 400px;
       margin-left: auto;
@@ -126,7 +127,7 @@
   <!-- Fixed logo at top center -->
   <div class="logo-container">
     <a href="https://cocoex.xyz" target="_blank" rel="noopener noreferrer">
-      <img src="img/logo.png" alt="Cocoex Logo" class="logo-img" />
+      <img src="/img/logo.png" alt="cocoex Logo" class="logo-img" />
     </a>
   </div>
 
@@ -137,14 +138,9 @@
   </div>
 
   <div class="expired-text">
-    max logins reached - try again tomorrow
+    Max logins reached - try again tomorrow!
   </div>
 
   <div class="telescope">🔭</div>
-
-  <audio autoplay loop>
-    <source src="https://cdn.pixabay.com/audio/2022/03/15/audio_5ba25a5f81.mp3" type="audio/mpeg" />
-    Your browser does not support the audio element.
-  </audio>
 </body>
 </html>
