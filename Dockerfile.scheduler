@@ -12,11 +12,10 @@ RUN apk add --no-cache \
     py3-cryptography \
     py3-pip \
     py3-setuptools \
-    py3-wheel
+    py3-wheel \
+    busybox-suid
 
 WORKDIR /app
-
-COPY requirements.txt .
 
 # Create db_files directory with proper permissions
 RUN mkdir -p /app/db_files && chmod -R 777 /app/db_files
@@ -32,19 +31,34 @@ RUN chown -R appuser:appgroup /app && \
     chmod -R 755 /app && \
     chmod -R 777 /app/db_files
 
-# Create venv and install dependencies
+# Prepare system paths before switching user
+RUN mkdir -p /etc/crontabs && chown appuser:appgroup /etc/crontabs
+RUN mkdir /venv && chown appuser:appgroup /venv
+
+
+# Create and prepare /etc/crontabs/root as root
+RUN mkdir -p /etc/crontabs \
+ && echo "1 0 * * * /venv/bin/python /app/generate_fact.py && docker restart muse-observatory-app" > /etc/crontabs/root \
+ && chown appuser:appgroup /etc/crontabs/root
+
+# Copy start-cron.sh and set permissions
+COPY start-cron.sh /start-cron.sh
+RUN chmod +x /start-cron.sh && chown appuser:appgroup /start-cron.sh
+
+# Now switch to appuser for security
+USER appuser
+
+COPY requirements.txt .
+# Create venv and install dependencies as non-root
 RUN python3 -m venv /venv \
  && /venv/bin/pip install --upgrade pip \
  && /venv/bin/pip install -r requirements.txt
 
+# Copy full app code after dependencies (avoids cache busting)
 COPY . /app
-
-COPY start-cron.sh /start-cron.sh
-RUN chmod +x /start-cron.sh && chown appuser:appgroup /start-cron.sh
-
-USER appuser
 
 ENV DB_DIR=/app/db_files
 ENV OPENAI_API_KEY=${OPENAI_API_KEY}
 ENV PYTHONPATH=/app
+
 CMD ["/start-cron.sh"]
