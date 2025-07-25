@@ -431,3 +431,34 @@ def observatory(request: Request):
     </style>
     """
     )
+
+    # Add client-side timeout script
+    ui.add_head_html(
+        """
+    <script>
+      // Handle 2-minute idle timeout
+      let idleTimer = null;
+      const idleTime = 120000; // 2 minutes in milliseconds
+
+      // Reset the timer when user interacts
+      function resetIdleTimer() {
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(handleIdleTimeout, idleTime);
+      }
+
+      // Handle when idle timeout occurs
+      function handleIdleTimeout() {
+        // Reload the page which will trigger the server-side timeout
+        window.location.reload();
+      }
+
+      // Set up event listeners for user activity
+      ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(evt => {
+        document.addEventListener(evt, resetIdleTimer, false);
+      });
+
+      // Start the timer when page loads
+      document.addEventListener('DOMContentLoaded', resetIdleTimer, false);
+    </script>
+    """
+    )

@@ -49,7 +49,7 @@ class HelpButton:
                         padding-top: 0;
                     ">
                         <p style="margin-top: 0; margin-bottom: 0.75rem;">
-                            Welcome to Muse Observatory! Each day introduces a new <strong>Muse</strong> with its own unique energy and theme. These Muses are narratives built on top of the <a href="https://cocoex.xyz" target="_blank" rel="noopener noreferrer">cocoex comet-collab</a>. Each Muse is connected to a specific <a href="https://sdgs.un.org/goals" target="_blank" rel="noopener noreferrer">Sustainable Development Goal (SDG)</a> and a related social cause.
+                            Welcome to Muse Observatory! Each day introduces a new <strong>Muse</strong> with its own unique energy and theme. These Muses are narratives built on top of the <a href="https://cocoex.xyz" target="_blank" rel="noopener noreferrer" class="muse-link">cocoex</a> comet-collab. Each Muse is connected to a specific <a href="https://sdgs.un.org/goals" target="_blank" rel="noopener noreferrer" class="muse-link">Sustainable Development Goal (SDG)</a> and a related social cause.
                         </p>
                         <p style="margin-bottom: 0.75rem; font-style: normal;">
                             <strong>🌌 How it works:</strong><br>
@@ -59,7 +59,7 @@ class HelpButton:
                         </p>
                         <p style="margin-bottom: 0.75rem; font-style: normal;">
                             <strong>🌟 Building together:</strong><br>
-                            Finally, every inspiration and project discovered will be added to the <a href="https://cocoex.xyz" target="_blank" rel="noopener noreferrer">cocoex register</a>, helping us build a collective database of initiatives and ideas — from the people, for the people. :)
+                            Finally, every inspiration and project discovered will be added to the <a href="https://cocoex.xyz" target="_blank" rel="noopener noreferrer" class="muse-link">cocoex</a> register, helping us build a collective database of initiatives and ideas — from the people, for the people. :)
                         </p>
                     </div>
                 """
@@ -120,6 +120,18 @@ class HelpButton:
         .fixed.top-4.left-4.z-50:hover {
             transform: scale(1.1) !important;
             box-shadow: 0 4px 12px rgba(0,0,0,0.4), 0 0 4px rgba(255,255,255,0.5) !important;
+        }
+
+        .muse-link {
+            color: #a0b9ff !important;
+            text-decoration: underline !important;
+            font-weight: 500 !important;
+            transition: all 0.2s ease !important;
+        }
+
+        .muse-link:hover {
+            color: #d4e0ff !important;
+            text-shadow: 0 0 8px rgba(160, 185, 255, 0.6) !important;
         }
         </style>
         """
