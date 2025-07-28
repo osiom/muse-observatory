@@ -79,6 +79,8 @@ services:
       - DB_DIR=/app/db_files
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - PYTHONPATH=/app
+    entrypoint: ["/app/start-cron.sh"]
+    restart: "no"
     networks:
       - muse-network
 

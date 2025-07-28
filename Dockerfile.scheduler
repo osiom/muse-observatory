@@ -1,50 +1,26 @@
-FROM python:3.11-alpine
+FROM python:3.11-slim
 
-# Install required system dependencies for building packages and venv
-RUN apk add --no-cache \
-    bash \
-    tzdata \
-    docker-cli \
-    build-base \
-    libffi-dev \
-    openssl-dev \
-    python3-dev \
-    py3-cryptography \
-    py3-pip \
-    py3-setuptools \
-    py3-wheel
+# Create user and give permission to venv directory
+RUN useradd --create-home --shell /bin/bash appuser && \
+    mkdir /venv && chown appuser:appuser /venv
 
+# Set environment variables
+ENV VIRTUAL_ENV=/venv
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+# Switch to non-root user to create virtualenv
+USER appuser
+RUN python -m venv $VIRTUAL_ENV
+
+# Back to root for pip and file operations
+USER root
 WORKDIR /app
-
-COPY requirements.txt .
-
-# Create db_files directory with proper permissions
-RUN mkdir -p /app/db_files && chmod -R 777 /app/db_files
-
-ENV TZ=Europe/Berlin
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-
-# Create a non-root user and group
-RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
-
-# Set permissions for /app and ensure db_files is writable
-RUN chown -R appuser:appgroup /app && \
-    chmod -R 755 /app && \
-    chmod -R 777 /app/db_files
-
-# Create venv and install dependencies
-RUN python3 -m venv /venv \
- && /venv/bin/pip install --upgrade pip \
- && /venv/bin/pip install -r requirements.txt
-
 COPY . /app
+RUN pip install --no-cache-dir -r requirements.txt
+RUN chmod +x /app/start-cron.sh
 
-COPY start-cron.sh /start-cron.sh
-RUN chmod +x /start-cron.sh && chown appuser:appgroup /start-cron.sh
-
+# Switch back to appuser to run the job
 USER appuser
 
-ENV DB_DIR=/app/db_files
-ENV OPENAI_API_KEY=${OPENAI_API_KEY}
-ENV PYTHONPATH=/app
-CMD ["/start-cron.sh"]
+# Default command
+ENTRYPOINT ["/app/start-cron.sh"]
