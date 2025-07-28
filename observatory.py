@@ -3,8 +3,8 @@ from typing import Dict, List
 
 from fastapi import Request
 from fastapi.responses import RedirectResponse
-from slowapi.errors import RateLimitExceeded
 from nicegui import ui
+from slowapi.errors import RateLimitExceeded
 
 from css.observatory_css import get_cosmic_css, get_load_cosmic_css, get_text_css
 from models.helper import create_help_button
@@ -189,7 +189,7 @@ def observatory(request: Request):
     apply_styles(oracle_day.color, oracle_day.support_color, oracle_day.astro_color)
 
     # Create and render help button instead of sidebar
-    help_button = create_help_button(oracle_day.color)
+    help_button = create_help_button(oracle_day.color, auto_open=True)
 
     with ui.column().classes("main-container"):
         # Background elements first
@@ -213,7 +213,7 @@ def observatory(request: Request):
                     )
             help_button.render()
             # Text elements with minimal spacing
-            ui.label("Today's Muse").classes("muse-subtitle text-center").style(
+            ui.label("Today's Muse is").classes("muse-subtitle text-center").style(
                 "margin-top: 0px; margin-bottom: 0px;"
             )
             ui.label(oracle_day.muse_name.upper()).classes(
@@ -429,5 +429,36 @@ def observatory(request: Request):
         }
     }
     </style>
+    """
+    )
+
+    # Add client-side timeout script
+    ui.add_head_html(
+        """
+    <script>
+      // Handle 2-minute idle timeout
+      let idleTimer = null;
+      const idleTime = 120000; // 2 minutes in milliseconds
+
+      // Reset the timer when user interacts
+      function resetIdleTimer() {
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(handleIdleTimeout, idleTime);
+      }
+
+      // Handle when idle timeout occurs
+      function handleIdleTimeout() {
+        // Reload the page which will trigger the server-side timeout
+        window.location.reload();
+      }
+
+      // Set up event listeners for user activity
+      ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(evt => {
+        document.addEventListener(evt, resetIdleTimer, false);
+      });
+
+      // Start the timer when page loads
+      document.addEventListener('DOMContentLoaded', resetIdleTimer, false);
+    </script>
     """
     )

@@ -1,57 +1,76 @@
 # Muse Observatory
 
-Welcome to the **Muse Observatory** — your cosmic portal to the universe of cocoex, its radiant muses, and the ever-evolving dance of comet collaborations.
+Muse Observatory is a web application designed to inspire creativity and foster community engagement through daily rotating themes. The application is available at [https://muse-observatory.xyz](https://muse-observatory.xyz).
 
-## ✨ What is Muse Observatory?
+## Overview
 
-Muse Observatory is a stargazer’s tool, designed to help you explore the constellations of inspiration, social causes, and creative projects that orbit the cocoex universe. Each day, a new muse rises, guiding you to discover fun facts, cosmic questions, and collaborative projects that shine across the galaxy.
+Muse Observatory serves as a platform for exploration and collaboration centered around the cocoex community. It features a daily rotating "Muse" system that presents users with themed inspiration, information, and collaborative opportunities.
 
-## 🌌 Features
+## Core Functionality
 
-- **Daily Muse**: Meet a new muse every day, each representing a unique color and cosmic energy.
-- **Fun Facts**: Receive a daily fact from the stars, curated to spark your curiosity.
-- **Questions**: Reflect on questions that open new galaxies of thought.
-- **Comet Collabs**: Discover and share projects inspired by the muse, and connect with others across the universe.
-- **UI**: Enjoy a visually immersive experience with celestial backgrounds, cosmic loaders, and a palette inspired by the planets.
+- **Daily Muse System**: Automatically rotates through seven unique themes (Lunes, Ares, Rabu, Thunor, Shukra, Dosei, Solis), each associated with specific colors, celestial bodies, and social causes.
+- **Content Generation**: Provides daily facts and thought-provoking questions related to the current muse theme.
+- **Project Collaboration**: Enables users to discover and share projects aligned with the current theme.
+- **Responsive UI**: Features a themed user interface that adapts to each day's muse, with dynamic visual elements.
 
-## 🚀 How to Use
+## Technical Architecture
 
-1. **Launch the Observatory**: Start the app and let today’s muse guide your journey.
-2. **Absorb the Inspiration**: Read the daily fun fact and cosmic question.
-3. **Share Your Light**: Write your inspiration and see which comet collabs (projects) align with your muse.
-4. **Explore & Connect**: Visit project links, share your ideas, and become part of the cosmic community.
+### Backend Technology
+- **Python**: Core application language with FastAPI and NiceGUI for the UI framework
+- **TinyDB**: Lightweight JSON document database for storing facts, inspirations, and project data
+- **OpenAI Integration**: For generating theme-relevant content
+- **Rate Limiting**: Implemented with slowapi to manage API usage
 
-## 🌠 Tech Constellation
-- **Python** (NiceGUI, TinyDB, dotenv)
-- **TinyDB** (lightweight JSON-based database for storing cosmic facts and inspirations)
-- **Docker** (for easy launch and orbit)
+### Deployment Infrastructure
+- **Docker**: Containerized application with separate services:
+  - Main application service
+  - Fact generation scheduler
+  - NGINX reverse proxy for SSL termination and routing
 
-## 🪐 Getting Started
+### System Requirements
+- Docker and Docker Compose for containerized deployment
+- OpenAI API key (for content generation features)
+
+## Installation & Deployment
 
 1. Clone the repository:
    ```sh
-   git clone <your-repo-url>
+   git clone https://github.com/username/muse-observatory.git
    cd muse-observatory
    ```
-2. Launch with Docker Compose:
+
+2. Configure environment variables (create a .env file):
+   ```
+   OPENAI_API_KEY=your_openai_api_key
+   ENVIRONMENT=production
+   ```
+
+3. Launch with Docker Compose:
    ```sh
    docker-compose up --build
    ```
-3. Visit [http://localhost:8080](http://localhost:8080) and begin your cosmic journey.
 
-## 🌙 About cocoex
-[cocoex](http://cocoex.xyz)  aims to cultivate a vibrant COMMUNITY where ART and IMPACTFUL change coexist in harmonious synergy. We want to bring artists, creators and collectors together to support and inspire one another to create a sense of unity and shared purpose.
+4. Access the application at [http://localhost:8080](http://localhost:8080) (or your configured port)
 
-## 🛡️ Privacy & Data Policy
-Muse Observatory does not collect personal data beyond what is necessary for its core features. Any user input or project inspiration is stored securely and used only to enhance the collaborative experience. No data is sold or shared with third parties. For questions or data removal requests, contact osiom.
+## API Endpoints
 
-## ⚖️ License
+- `/api/health`: Health check endpoint
+- `/api/info`: Application information
+- `/api/stats`: Usage statistics
+- `/observatory`: Main application interface
+
+## About cocoex
+
+[cocoex](http://cocoex.xyz) is a community platform focused on integrating art with impactful social change. The organization brings together artists, creators, and collectors to support and inspire each other while creating a sense of unity and shared purpose.
+
+## Privacy Policy
+
+Muse Observatory collects minimal user data, limited to what's necessary for core functionality. All user inputs and project inspirations are stored securely and used exclusively for enhancing collaborative experiences. No data is sold or shared with third parties.
+
+## License
+
 This project is licensed under the MIT License. See the LICENSE file for details.
 
-Copyright (c) 2025 osiom
+## Contributing
 
-## 📜 Legal Notice
-Muse Observatory is provided "as is" without warranty of any kind. By using this software, you agree to use it responsibly and in accordance with all applicable laws. The maintainers and owner (osiom) are not liable for any damages or losses resulting from use of this project.
-
-## 🤝 Contributing
-Contributions are welcome! Please open issues or pull requests to help improve the project.
+Contributions are welcome. Please open issues or pull requests to help improve the project.
