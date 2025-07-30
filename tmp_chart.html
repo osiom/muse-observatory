@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Muse Observatory</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0a0e17;
+            --text-color: #e8e6e3;
+            --accent-color: #5d8aff;
+            --muse-point-size: 80px;
+        }
+
+        body {
+            font-family: 'Cormorant Garamond', serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(93, 138, 255, 0.15) 0%, transparent 30%),
+                radial-gradient(circle at 80% 70%, rgba(255, 107, 107, 0.15) 0%, transparent 30%);
+        }
+
+        .observatory-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        .observatory-title {
+            text-align: center;
+            font-size: 3.5rem;
+            margin-bottom: 50px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            position: relative;
+            display: inline-block;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .observatory-title:after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 25%;
+            width: 50%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
+        }
+
+        .observatory-chart {
+            position: relative;
+            width: 800px;
+            height: 800px;
+            margin: 40px auto;
+            border-radius: 50%;
+            background: rgba(10, 14, 23, 0.7);
+            border: 1px solid rgba(93, 138, 255, 0.2);
+            box-shadow: 
+                0 0 60px rgba(93, 138, 255, 0.1),
+                inset 0 0 60px rgba(93, 138, 255, 0.1);
+        }
+
+        .muse-point {
+            position: absolute;
+            width: var(--muse-point-size);
+            height: var(--muse-point-size);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            background: var(--bg-color);
+            border: 1px solid var(--accent-color);
+            color: var(--text-color);
+            font-size: 1.2rem;
+            z-index: 2;
+        }
+
+        .muse-point:hover {
+            transform: scale(1.15);
+            box-shadow: 0 0 30px var(--muse-glow);
+            z-index: 10;
+        }
+
+        .muse-info {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(10, 14, 23, 0.95);
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 40px rgba(93, 138, 255, 0.3);
+            width: 350px;
+            z-index: 100;
+            border: 1px solid rgba(93, 138, 255, 0.3);
+            backdrop-filter: blur(5px);
+        }
+
+        .muse-info.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -45%); }
+            to { opacity: 1; transform: translate(-50%, -50%); }
+        }
+
+        .muse-info h2 {
+            margin-top: 0;
+            border-bottom: 1px solid rgba(93, 138, 255, 0.3);
+            padding-bottom: 15px;
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--accent-color);
+        }
+
+        .muse-info-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            cursor: pointer;
+            font-size: 1.5rem;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .muse-info-close:hover {
+            opacity: 1;
+        }
+
+        .muse-info-item {
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        .muse-info-item strong {
+            display: inline-block;
+            width: 140px;
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        .observatory-center {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            background: rgba(10, 14, 23, 0.9);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 1px solid var(--accent-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1.3rem;
+            box-shadow: 
+                0 0 30px rgba(93, 138, 255, 0.2),
+                inset 0 0 20px rgba(93, 138, 255, 0.1);
+            z-index: 1;
+        }
+
+        .connection-line {
+            position: absolute;
+            height: 1px;
+            background: linear-gradient(90deg, var(--accent-color), transparent);
+            transform-origin: 0 0;
+            z-index: 0;
+            opacity: 0.3;
+        }
+
+        .cosmic-dots {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            overflow: hidden;
+            z-index: -1;
+        }
+
+        .cosmic-dot {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.3;
+        }
+
+        @media (max-width: 900px) {
+            .observatory-chart {
+                width: 500px;
+                height: 500px;
+            }
+
+            .muse-point {
+                width: 60px;
+                height: 60px;
+                font-size: 1rem;
+            }
+
+            .observatory-center {
+                width: 100px;
+                height: 100px;
+                font-size: 1rem;
+            }
+
+            .muse-info {
+                width: 280px;
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .observatory-chart {
+                width: 320px;
+                height: 320px;
+            }
+
+            .muse-point {
+                width: 50px;
+                height: 50px;
+                font-size: 0.8rem;
+            }
+
+            .observatory-title {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="observatory-container">
+        <h1 class="observatory-title">Muse Observatory</h1>
+        
+        <div class="observatory-chart" id="observatoryChart">
+            <div class="cosmic-dots" id="cosmicDots"></div>
+            <div class="observatory-center">Muses</div>
+            <!-- Muse points will be added here by JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        const MUSES = {
+            0: {
+                "muse": "Lunes",
+                "day_name": "Monday",
+                "celestial_body": "Moon",
+                "color": "indigo",
+                "note": "Re",
+                "cause": "Water",
+                "glow": "rgba(75, 0, 130, 0.7)"
+            },
+            1: {
+                "muse": "Ares",
+                "day_name": "Tuesday",
+                "celestial_body": "Mars",
+                "color": "red",
+                "note": "Si",
+                "cause": "Reforestation",
+                "glow": "rgba(255, 0, 0, 0.7)"
+            },
+            2: {
+                "muse": "Rabu",
+                "day_name": "Wednesday",
+                "celestial_body": "Mercury",
+                "color": "green",
+                "note": "Mi",
+                "cause": "Biodiversity",
+                "glow": "rgba(0, 255, 0, 0.7)"
+            },
+            3: {
+                "muse": "Thunor",
+                "day_name": "Thursday",
+                "celestial_body": "Jupiter",
+                "color": "yellow",
+                "note": "Do",
+                "cause": "Renewable Energy",
+                "glow": "rgba(255, 255, 0, 0.7)"
+            },
+            4: {
+                "muse": "Shukra",
+                "day_name": "Friday",
+                "celestial_body": "Venus",
+                "color": "blue",
+                "note": "La",
+                "cause": "Well-being",
+                "glow": "rgba(0, 0, 255, 0.7)"
+            },
+            5: {
+                "muse": "Dosei",
+                "day_name": "Saturday",
+                "celestial_body": "Saturn",
+                "color": "purple",
+                "note": "Fa",
+                "cause": "Zero Hunger",
+                "glow": "rgba(128, 0, 128, 0.7)"
+            },
+            6: {
+                "muse": "Solis",
+                "day_name": "Sunday",
+                "celestial_body": "Sun",
+                "color": "orange",
+                "note": "So",
+                "cause": "Human Rights",
+                "glow": "rgba(255, 165, 0, 0.7)"
+            }
+        };
+
+        // Create cosmic background dots
+        const cosmicDots = document.getElementById('cosmicDots');
+        for (let i = 0; i < 200; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'cosmic-dot';
+            dot.style.left = `${Math.random() * 100}%`;
+            dot.style.top = `${Math.random() * 100}%`;
+            dot.style.width = `${Math.random() * 2 + 1}px`;
+            dot.style.height = dot.style.width;
+            dot.style.opacity = Math.random() * 0.5 + 0.1;
+            cosmicDots.appendChild(dot);
+        }
+
+        // Create muse points in a circular pattern
+        const chart = document.getElementById('observatoryChart');
+        const centerX = chart.offsetWidth / 2;
+        const centerY = chart.offsetHeight / 2;
+        const radius = Math.min(centerX, centerY) * 0.7;
+
+        // Create muse info container
+        const museInfo = document.createElement('div');
+        museInfo.className = 'muse-info';
+        museInfo.innerHTML = `
+            <span class="muse-info-close">&times;</span>
+            <h2 class="muse-name"></h2>
+            <div class="muse-info-item"><strong>Day:</strong> <span class="muse-day"></span></div>
+            <div class="muse-info-item"><strong>Celestial Body:</strong> <span class="muse-body"></span></div>
+            <div class="muse-info-item"><strong>Color:</strong> <span class="muse-color"></span></div>
+            <div class="muse-info-item"><strong>Note:</strong> <span class="muse-note"></span></div>
+            <div class="muse-info-item"><strong>Cause:</strong> <span class="muse-cause"></span></div>
+        `;
+        chart.appendChild(museInfo);
+
+        // Close muse info when clicking the close button
+        museInfo.querySelector('.muse-info-close').addEventListener('click', () => {
+            museInfo.classList.remove('active');
+        });
+
+        // Position each muse in a circle
+        Object.keys(MUSES).forEach((key, index) => {
+            const muse = MUSES[key];
+            const angle = (index / Object.keys(MUSES).length) * 2 * Math.PI;
+            const x = centerX + radius * Math.cos(angle) - (parseInt(getComputedStyle(document.documentElement).getPropertyValue('--muse-point-size')) / 2);
+            const y = centerY + radius * Math.sin(angle) - (parseInt(getComputedStyle(document.documentElement).getPropertyValue('--muse-point-size')) / 2);
+
+            const musePoint = document.createElement('div');
+            musePoint.className = 'muse-point';
+            musePoint.textContent = muse.muse;
+            musePoint.style.left = `${x}px`;
+            musePoint.style.top = `${y}px`;
+            musePoint.style.borderColor = muse.color;
+            musePoint.style.color = muse.color;
+            
+            // Store the glow color in a CSS variable
+            musePoint.style.setProperty('--muse-glow', muse.glow);
+
+            // Create connection line to center
+            const line = document.createElement('div');
+            line.className = 'connection-line';
+            line.style.left = `${centerX}px`;
+            line.style.top = `${centerY}px`;
+            line.style.width = `${radius}px`;
+            line.style.transform = `rotate(${angle}rad)`;
+            chart.appendChild(line);
+
+            // Add click event to show muse info
+            musePoint.addEventListener('click', (e) => {
+                e.stopPropagation();
+                museInfo.querySelector('.muse-name').textContent = muse.muse;
+                museInfo.querySelector('.muse-day').textContent = muse.day_name;
+                museInfo.querySelector('.muse-body').textContent = muse.celestial_body;
+                museInfo.querySelector('.muse-color').textContent = muse.color;
+                museInfo.querySelector('.muse-note').textContent = muse.note;
+                museInfo.querySelector('.muse-cause').textContent = muse.cause;
+                museInfo.classList.add('active');
+            });
+
+            chart.appendChild(musePoint);
+        });
+
+        // Close muse info when clicking outside
+        chart.addEventListener('click', (e) => {
+            if (e.target === chart) {
+                museInfo.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>
