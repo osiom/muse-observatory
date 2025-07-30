@@ -106,9 +106,32 @@ nicegui_app.add_middleware(LocalOnlyMiddleware)
 
 @nicegui_app.exception_handler(429)
 async def ratelimit_handler(request, exc):
-    with open("./limited.html", "r") as f:
-        html_content = f.read()
-    return HTMLResponse(content=html_content, status_code=429)
+    try:
+        # Read the limited.html file
+        with open("./limited.html", "r") as f:
+            html_content = f.read()
+
+        # Read and encode the logo image
+        try:
+            with open("img/logo.png", "rb") as img_file:
+                logo_base64 = base64.b64encode(img_file.read()).decode()
+
+            # Replace the image placeholder with the actual base64 image
+            html_content = html_content.replace(
+                'src="/img/logo.png"', f'src="data:image/png;base64,{logo_base64}"'
+            )
+        except Exception as img_error:
+            logger.error(f"Error encoding logo: {str(img_error)}")
+            # If we can't encode the logo, the fallback in the HTML will work
+
+        return HTMLResponse(content=html_content, status_code=429)
+    except Exception as e:
+        logger.error(f"Error serving limited.html: {str(e)}")
+        # Fallback response if we can't load the HTML file
+        return HTMLResponse(
+            content="<html><body><h1>Rate limit exceeded</h1><p>Please try again tomorrow.</p></body></html>",
+            status_code=429,
+        )
 
 
 # Health check endpoint

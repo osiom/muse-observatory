@@ -9,7 +9,7 @@ services:
     volumes:
       - ./db_files:/db_files
       - ./logs:/logs  # Add this line
-    restart: "no"
+    restart: 'no'
     mem_limit: 64M
 
   app:
@@ -30,6 +30,7 @@ services:
       # Mount local db_files directory directly
       - ./db_files:/app/db_files:rw
       - ./logs:/app/logs:rw
+      - ./img:/app/img:ro  # Mount the img directory as read-only
     environment:
       # Application configuration
       - HOST=0.0.0.0
@@ -47,13 +48,13 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
     networks:
       - muse-network
-    # Moderate resource limits for 4GB systems
+    # Increased resource limits to prevent OOM kills (code 137)
     deploy:
       resources:
         limits:
-          memory: 1.5G
+          memory: 3.5G
         reservations:
-          memory: 512M
+          memory: 2G
     # Health check with longer intervals to reduce overhead
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8080/api/health || exit 1"]
@@ -73,7 +74,7 @@ services:
       context: .
       dockerfile: Dockerfile.scheduler
     container_name: muse-fact-scheduler
-    restart: no
+    restart: 'no'
     depends_on:
       - app
     volumes:
@@ -97,6 +98,7 @@ services:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
       - /etc/ssl/certs/cloudflare.crt:/etc/ssl/certs/cloudflare.crt:ro
       - /etc/ssl/private/cloudflare.key:/etc/ssl/private/cloudflare.key:ro
+      - ./img:/usr/share/nginx/html/img:ro  # Correctly mount the img directory
     depends_on:
       - app
     networks:

@@ -127,7 +127,8 @@
   <!-- Fixed logo at top center -->
   <div class="logo-container">
     <a href="https://cocoex.xyz" target="_blank" rel="noopener noreferrer">
-      <img src="/img/logo.png" alt="cocoex Logo" class="logo-img" />
+      <!-- This src will be replaced by base64 data in app.py -->
+      <img src="/img/logo.png" alt="cocoex Logo" class="logo-img" onerror="this.onerror=null; this.src='data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><text y=\'.9em\' font-size=\'90\'>.</text></svg>';">
     </a>
   </div>
 
