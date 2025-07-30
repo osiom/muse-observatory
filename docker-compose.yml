@@ -62,13 +62,18 @@ services:
       retries: 3
       start_period: 40s
     command: python app.py
+    # Add network tuning for better stability
+    sysctls:
+      - net.ipv4.tcp_keepalive_time=60
+      - net.ipv4.tcp_keepalive_intvl=10
+      - net.ipv4.tcp_keepalive_probes=6
 
   scheduler:
     build:
       context: .
       dockerfile: Dockerfile.scheduler
     container_name: muse-fact-scheduler
-    restart: unless-stopped
+    restart: no
     depends_on:
       - app
     volumes:
@@ -80,7 +85,6 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - PYTHONPATH=/app
     entrypoint: ["/app/start-cron.sh"]
-    restart: "no"
     networks:
       - muse-network
 
@@ -97,8 +101,21 @@ services:
       - app
     networks:
       - muse-network
+    # Add NGINX optimization for connections
+    sysctls:
+      - net.ipv4.tcp_keepalive_time=60
+      - net.ipv4.tcp_keepalive_intvl=10
+      - net.ipv4.tcp_keepalive_probes=6
+    deploy:
+      resources:
+        limits:
+          memory: 256M
 
 networks:
   muse-network:
     driver: bridge
     name: muse_observatory_network
+    # Add network optimizations
+    driver_opts:
+      com.docker.network.bridge.host_binding_ipv4: "0.0.0.0"
+      com.docker.network.driver.mtu: "1500"

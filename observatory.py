@@ -436,14 +436,54 @@ def observatory(request: Request):
     ui.add_head_html(
         """
     <script>
-      // Handle 2-minute idle timeout
+      // Handle idle timeout - increased to 5 minutes for better mobile experience
       let idleTimer = null;
-      const idleTime = 120000; // 2 minutes in milliseconds
+      const idleTime = 300000; // 5 minutes in milliseconds
+      let warningShown = false;
+      let warningElement = null;
 
       // Reset the timer when user interacts
       function resetIdleTimer() {
         clearTimeout(idleTimer);
-        idleTimer = setTimeout(handleIdleTimeout, idleTime);
+        if (warningShown) {
+          hideWarning();
+        }
+        idleTimer = setTimeout(showWarning, idleTime);
+      }
+
+      // Show warning before timeout
+      function showWarning() {
+        warningShown = true;
+
+        // Create warning element if it doesn't exist
+        if (!warningElement) {
+          warningElement = document.createElement('div');
+          warningElement.style.position = 'fixed';
+          warningElement.style.bottom = '10px';
+          warningElement.style.left = '10px';
+          warningElement.style.backgroundColor = 'rgba(0,0,0,0.8)';
+          warningElement.style.color = 'white';
+          warningElement.style.padding = '10px';
+          warningElement.style.borderRadius = '5px';
+          warningElement.style.zIndex = '10000';
+          warningElement.style.fontSize = '14px';
+          warningElement.style.boxShadow = '0 0 10px rgba(255,255,255,0.2)';
+          warningElement.innerHTML = 'Your session is about to expire. Tap anywhere to continue.';
+          document.body.appendChild(warningElement);
+        } else {
+          warningElement.style.display = 'block';
+        }
+
+        // Set timeout for actual reload if no action is taken
+        idleTimer = setTimeout(handleIdleTimeout, 30000); // 30 seconds warning
+      }
+
+      // Hide warning
+      function hideWarning() {
+        warningShown = false;
+        if (warningElement) {
+          warningElement.style.display = 'none';
+        }
       }
 
       // Handle when idle timeout occurs
@@ -452,8 +492,8 @@ def observatory(request: Request):
         window.location.reload();
       }
 
-      // Set up event listeners for user activity
-      ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(evt => {
+      // Set up event listeners for user activity - more comprehensive for mobile
+      ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'touchmove', 'click', 'focus'].forEach(evt => {
         document.addEventListener(evt, resetIdleTimer, false);
       });
 

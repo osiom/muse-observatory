@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from typing import Any, Callable, Dict, List, Optional, Union
 
 from fastapi import Depends, FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from nicegui import app as nicegui_app
 from nicegui import ui
 from slowapi import _rate_limit_exceeded_handler
@@ -103,11 +103,13 @@ nicegui_app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handle
 nicegui_app.add_middleware(LocalOnlyMiddleware)
 # --- End Apply Local Only Middleware ---
 
+
 @nicegui_app.exception_handler(429)
 async def ratelimit_handler(request, exc):
     with open("./limited.html", "r") as f:
         html_content = f.read()
     return HTMLResponse(content=html_content, status_code=429)
+
 
 # Health check endpoint
 @nicegui_app.get("/api/health")
@@ -463,7 +465,69 @@ def configure_nicegui():
     ui.add_head_html(
         """
         <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔭</text></svg>">
-    """
+        <script>
+        // Custom NiceGUI WebSocket reconnection logic for better mobile experience
+        window.addEventListener('DOMContentLoaded', function() {
+            // Override the default NiceGUI reconnection behavior
+            if (window._nicegui && window._nicegui.connectSocket) {
+                const originalConnect = window._nicegui.connectSocket;
+                window._nicegui.connectSocket = function() {
+                    // Add custom connection settings
+                    if (window._nicegui.socket && window._nicegui.socket.io) {
+                        window._nicegui.socket.io.reconnectionDelay = 1000; // Start with 1s delay
+                        window._nicegui.socket.io.reconnectionDelayMax = 10000; // Max 10s delay
+                        window._nicegui.socket.io.timeout = 10000; // 10s timeout
+                        window._nicegui.socket.io.reconnectionAttempts = 10; // More attempts
+                    }
+                    return originalConnect.apply(this, arguments);
+                };
+            }
+
+            // Custom handler for reconnection notification
+            const showReconnecting = function(isReconnecting) {
+                let notificationEl = document.getElementById('reconnection-notification');
+                if (!notificationEl && isReconnecting) {
+                    notificationEl = document.createElement('div');
+                    notificationEl.id = 'reconnection-notification';
+                    notificationEl.style.position = 'fixed';
+                    notificationEl.style.bottom = '10px';
+                    notificationEl.style.left = '10px';
+                    notificationEl.style.backgroundColor = 'rgba(0,0,0,0.8)';
+                    notificationEl.style.color = 'white';
+                    notificationEl.style.padding = '10px';
+                    notificationEl.style.borderRadius = '5px';
+                    notificationEl.style.zIndex = '10000';
+                    notificationEl.style.fontSize = '14px';
+                    notificationEl.style.transition = 'opacity 0.3s';
+                    notificationEl.innerHTML = 'Reconnecting to server...';
+                    document.body.appendChild(notificationEl);
+                } else if (notificationEl) {
+                    if (isReconnecting) {
+                        notificationEl.style.display = 'block';
+                        notificationEl.style.opacity = '1';
+                    } else {
+                        notificationEl.style.opacity = '0';
+                        setTimeout(function() {
+                            notificationEl.style.display = 'none';
+                        }, 300);
+                    }
+                }
+            };
+
+            // Listen for socket events if available
+            setTimeout(function() {
+                if (window._nicegui && window._nicegui.socket) {
+                    window._nicegui.socket.on('reconnect_attempt', function() {
+                        showReconnecting(true);
+                    });
+                    window._nicegui.socket.on('connect', function() {
+                        showReconnecting(false);
+                    });
+                }
+            }, 1000);
+        });
+        </script>
+"""
     )
     ui.run_with(nicegui_app, title="Muse Observatory", favicon="🔭")
 
@@ -482,4 +546,15 @@ if __name__ == "__main__":
 
     configure_nicegui()
     # 🧠 Actually start the server:
-    ui.run(host=host, port=port, reload=debug, title="Muse Observatory", favicon="🔭")
+    # Added WebSocket parameters for better mobile compatibility
+    ui.run(
+        host=host,
+        port=port,
+        reload=debug,
+        title="Muse Observatory",
+        favicon="🔭",
+        reconnect_timeout=10,
+        show_welcome_message=False,
+        uvicorn_logging_level="error",
+        uvicorn_reload_excludes=[".*", ".git*", "*.db"],
+    )
